@@ -1,11 +1,11 @@
-D-HASH Experiment Framework  
+# D-HASH Experiment Framework  
 Redis-based Key Routing Evaluation Suite
 
 This repository provides a reproducible framework for evaluating key–routing algorithms in a Redis-based multi-node setup. The implementation includes Consistent Hashing (CH), Weighted Consistent Hashing (WCH), Rendezvous Hashing (HRW), and D-HASH (Dynamic Hot-key Aware Scalable Hashing). The evaluation follows a multi-stage structure commonly used in systems research.
 
-----------------------------------------------------------------------
-Directory Structure
-----------------------------------------------------------------------
+---
+
+## Directory Structure
 
 ```text
 .
@@ -27,19 +27,18 @@ Directory Structure
 └── results/               (generated outputs)
     └── .gitkeep
 ```
-----------------------------------------------------------------------
-System Requirements
-----------------------------------------------------------------------
+---
+## System Requirements
 
 - Docker and Docker Compose
 - Python 3.11 (inside runner container)
 - Redis 7.4.2 (automatically pulled via docker-compose)
 - At least 8 GB RAM recommended
-- Tested on Windows 11 + WSL2; Linux and macOS also supported
+- Tested on Windows 11 + WSL2
 
-----------------------------------------------------------------------
-Building and Running
-----------------------------------------------------------------------
+---
+
+## Building and Running
 
 (1) Build the runner image  
     docker compose build runner
@@ -57,9 +56,9 @@ Building and Running
 Modes: all, pipeline, microbench, ablation, zipf, redistrib  
 Datasets: NASA, eBay, ALL
 
-----------------------------------------------------------------------
-Experiment Stages
-----------------------------------------------------------------------
+---
+
+## Experiment Stages
 
 A1. Pipeline Sweep  
     Evaluates pipeline sizes (B) and identifies B* that balances throughput and tail latency.
@@ -78,9 +77,9 @@ C. Zipf Workload Evaluation
 Redistribution  
     Reports key movement ratio (%) for membership transitions 5→6 and 6→5.
 
-----------------------------------------------------------------------
-Output Files
-----------------------------------------------------------------------
+---
+
+## Output Files
 
 All results are placed under results/ as CSV files:
 
@@ -91,9 +90,9 @@ All results are placed under results/ as CSV files:
 {dataset}_redistribution.csv  
 {dataset}_*_env_meta.csv
 
-----------------------------------------------------------------------
-Reproducibility Notes
-----------------------------------------------------------------------
+---
+
+## Reproducibility Notes
 
 - Seeds: SEED=1337, PYTHONHASHSEED=123  
 - Redis configuration: appendonly no, save ""  
@@ -101,8 +100,8 @@ Reproducibility Notes
 - Warmup batches excluded  
 - All metrics reported as mean ± standard deviation
 
-----------------------------------------------------------------------
-License
-----------------------------------------------------------------------
+---
+
+## License
 
 MIT License
