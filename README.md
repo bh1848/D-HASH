@@ -7,6 +7,7 @@ This repository provides a reproducible framework for evaluating key–routing a
 Directory Structure
 ----------------------------------------------------------------------
 
+```text
 .
 ├── docker-compose.yml
 ├── Dockerfile.runner
@@ -20,12 +21,12 @@ Directory Structure
 │       ├── bench.py
 │       ├── config.py
 │       └── utils.py
-├── data/            (raw datasets, ignored in Git)
+├── data/                  (raw datasets, ignored in Git)
 │   ├── nasa_http_logs.log
 │   └── ebay_auction_logs.csv
-└── results/         (generated outputs)
+└── results/               (generated outputs)
     └── .gitkeep
-
+```
 ----------------------------------------------------------------------
 System Requirements
 ----------------------------------------------------------------------
