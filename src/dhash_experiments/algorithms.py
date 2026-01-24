@@ -40,7 +40,6 @@ class ConsistentHashing:
             self.sorted_keys.append(k)
         self.sorted_keys.sort()
 
-    # op is ignored (compat with D-HASH)
     def get_node(self, key: Any, op: str = "read") -> str:
         hk = self._hash(key)
         idx = bisect(self.sorted_keys, hk) % len(self.sorted_keys)
@@ -51,7 +50,6 @@ class ConsistentHashing:
 # Weighted Consistent Hashing (WCH)
 # -----------------------------------------------------------------------------
 class WeightedConsistentHashing:
-    """Largest remainder allocation keeping total virtual points equal to CH."""
 
     def __init__(
         self,
@@ -100,7 +98,6 @@ class WeightedConsistentHashing:
 # Rendezvous / HRW
 # -----------------------------------------------------------------------------
 class RendezvousHashing:
-    """Highest Random Weight (Rendezvous/HRW) hashing."""
 
     def __init__(self, nodes: List[str]) -> None:
         self.nodes = list(nodes)
@@ -125,14 +122,6 @@ class RendezvousHashing:
 # D-HASH (R=2, Sticky-Window Alternation)
 # -----------------------------------------------------------------------------
 class DHash:
-    """
-    D-HASH (R=2, Sticky-Window Alternation)
-      - write(op='write'): always CH primary
-      - read(op='read')  : after promotion (cnt>=T), alternate primary<->alt every W requests
-      - Guard            : first W requests after promotion always use primary (tail spike guard)
-      - Alternate        : chosen deterministically via per-key stride (not consecutive successor)
-    Window is request-count based (not time). For dynamic membership, invalidate alt externally.
-    """
 
     __slots__ = ("nodes", "T", "W", "reads", "alt", "ch", "hot_key_threshold")
 
@@ -152,7 +141,7 @@ class DHash:
         self.reads: Dict[Any, int] = {}
         self.alt: Dict[Any, str] = {}
         self.ch = ring if ring is not None else ConsistentHashing(nodes, replicas=replicas)
-        self.hot_key_threshold: int = self.T  # external compatibility
+        self.hot_key_threshold: int = self.T
 
     # --- helpers ---
     @staticmethod
@@ -184,11 +173,9 @@ class DHash:
         i = bisect(rk, hk) % len(rk)
         primary = ring[rk[i]]
 
-        # stride in [1, num_nodes-1]
         stride_span = max(1, len(self.nodes) - 1)
         stride = 1 + (self._h(f"{key}|alt") % stride_span)
 
-        # 1) stride search
         j = i
         for _ in range(len(rk)):
             j = (j + stride) % len(rk)
@@ -197,7 +184,6 @@ class DHash:
                 self.alt[key] = cand
                 return
 
-        # 2) linear scan backup
         j = i
         for _ in range(len(rk)):
             j = (j + 1) % len(rk)
@@ -206,7 +192,6 @@ class DHash:
                 self.alt[key] = cand
                 return
 
-        # 3) fallback
         self.alt[key] = primary
 
     # --- public API ---
@@ -226,5 +211,5 @@ class DHash:
         if delta < self.W:
             return self._primary_safe(key)
 
-        epoch = (delta - self.W) // self.W  # 0-based after guard
+        epoch = (delta - self.W) // self.W
         return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)

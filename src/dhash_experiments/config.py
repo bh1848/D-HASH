@@ -46,7 +46,6 @@ NP_RNG = default_rng(SEED)
 
 
 def reset_np_rng(seed: int) -> None:
-    """Reset the shared NumPy RNG used for Zipf workloads."""
     global NP_RNG
     NP_RNG = default_rng(seed)
 
@@ -55,10 +54,10 @@ def reset_np_rng(seed: int) -> None:
 # Environment metadata & reproducibility logging
 # -----------------------------------------------------------------------------
 def runtime_env_metadata(repeats: int = NUM_REPEATS) -> Dict[str, Any]:
-    import redis as _redis_pkg  # imported here to avoid hard dependency in other modules
+    import redis as _redis_pkg
 
     try:
-        import hiredis  # noqa: F401
+        import hiredis
 
         hiredis_enabled = True
     except Exception:
@@ -97,5 +96,4 @@ def log_reproducibility_info() -> None:
         logger.info("hiredis: not in use")
 
 
-# Run once on import
 log_reproducibility_info()

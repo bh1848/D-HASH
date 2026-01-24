@@ -40,9 +40,6 @@ def _value_payload(value_bytes: int) -> bytes:
 
 
 def _weighted_percentile(samples: List[Tuple[float, int]], q: float) -> float:
-    """
-    Weighted percentile over (value, weight) samples with linear interpolation.
-    """
     if not samples:
         return 0.0
     samples_sorted = sorted(samples, key=lambda x: x[0])
@@ -83,7 +80,16 @@ def warmup_cluster(sharding: Any, keys: List[Any], ratio: float = 0.01, cap: int
     read_buckets: Dict[str, List[Any]] = defaultdict(list)
 
     for k in sample:
-        write_buckets[sharding.get_node(k, op="write")].append(k)
+        p_node = sharding.get_node(k, op="write")
+        write_buckets[p_node].append(k)
+
+        # D-HASH 워밍업 시 Alternate 노드도 포함
+        if hasattr(sharding, "_ensure_alternate"):
+            sharding._ensure_alternate(k)
+            a_node = sharding.alt.get(k)
+            if a_node and a_node != p_node:
+                write_buckets[a_node].append(k)
+
         read_buckets[sharding.get_node(k, op="read")].append(k)
 
     payload = b'{"warm":1}'
@@ -110,9 +116,6 @@ def warmup_cluster(sharding: Any, keys: List[Any], ratio: float = 0.01, cap: int
 
 
 def flush_databases(redis_nodes: List[str], flush_async: bool = False) -> None:
-    """
-    Flush Redis DBs on all nodes. If async, poll DBSIZE to zero.
-    """
 
     def _init_one(container: str) -> None:
         try:
@@ -152,17 +155,22 @@ def benchmark_cluster(
     pipeline_size: int = PIPELINE_SIZE_DEFAULT,
     value_bytes: int = VALUE_BYTES,
 ) -> Dict[str, Any]:
-    """
-    KSII-style cluster bench:
-      - Throughput = total ops / (max write wall + max read wall)
-      - Latency = weighted stats of per-batch per-op averages (write/read/combined)
-      - Load Stddev = stdev of node (write+read) counts
-    """
-    # Bucketing by actual routing
+
+    #버킷 생성 로직
     write_buckets: Dict[str, List[Any]] = defaultdict(list)
     read_buckets: Dict[str, List[Any]] = defaultdict(list)
+
     for k in keys:
-        write_buckets[sharding.get_node(k, op="write")].append(k)
+        p_node = sharding.get_node(k, op="write")
+        write_buckets[p_node].append(k)
+
+        # D-HASH인 경우 Alternate 노드에도 동일한 데이터를 주입 (Controlled Initialization)
+        if hasattr(sharding, "_ensure_alternate"):
+            sharding._ensure_alternate(k)  # Alternate 노드 결정 강제
+            a_node = sharding.alt.get(k)
+            if a_node and a_node != p_node:
+                write_buckets[a_node].append(k)  # Alternate 노드도 쓰기 대상에 추가
+
         read_buckets[sharding.get_node(k, op="read")].append(k)
 
     node_load: Dict[str, int] = {

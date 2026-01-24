@@ -17,10 +17,7 @@ _CLF_RE = re.compile(
 
 
 def load_logs_dataset(path: str) -> Tuple[List[Any], Dict[str, Any]]:
-    """
-    Parse CLF-like NASA logs and use URL as key. Keep natural distribution.
-    Returns (keys, metadata_by_key).
-    """
+
     keys: List[str] = []
     meta: Dict[str, Any] = {}
     with open(path, "r", encoding="ISO-8859-1") as f:
@@ -51,9 +48,7 @@ def load_csv_dataset(
     key_column: str = "auctionid",
     natural_hot_threshold: Optional[int] = None,
 ) -> Tuple[List[Any], Dict[str, Any]]:
-    """
-    Load CSV and use key_column as key. If natural_hot_threshold is set, drop keys with count > threshold.
-    """
+
     df = pd.read_csv(path)
     if key_column not in df.columns:
         raise ValueError(f"'{key_column}' column not found in CSV.")
@@ -67,9 +62,7 @@ def load_csv_dataset(
 
 
 def generate_zipf_workload(keys: List[Any], size: int, alpha: float = 1.1) -> List[Any]:
-    """
-    Truncated Zipf over ranks (1..n): p_i ∝ i^(-alpha). Avoid raw np.random.zipf modulo bias.
-    """
+   
     if not keys:
         raise ValueError("Key list is empty.")
     n = len(keys)

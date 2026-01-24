@@ -57,15 +57,13 @@ def _parse_algos_list(algos_list: str) -> List[str]:
 
 
 def resolve_algorithms(stage: str, algos: str, algos_list: str) -> List[str]:
-    """
-    stage ∈ {"pipeline", "zipf", "microbench", "ablation", "redistrib"}
-    """
+
     if stage == "microbench":
-        return ["CH", "D-HASH"]  # microbench uses CH vs D-HASH label schema
+        return ["CH", "D-HASH"]
     if stage == "ablation":
         return ["D-HASH"]
     if stage == "redistrib":
-        return ["CH", "WCH", "Rendezvous"]  # used only for report
+        return ["CH", "WCH", "Rendezvous"]
 
     if algos == "all":
         return list(ALL_MODES)
@@ -74,7 +72,6 @@ def resolve_algorithms(stage: str, algos: str, algos_list: str) -> List[str]:
     if algos == "custom":
         return _parse_algos_list(algos_list)
 
-    # auto (default):
     if stage == "pipeline":
         return ["Consistent Hashing", "D-HASH"]
     if stage == "zipf":
