@@ -117,7 +117,8 @@ ls results/
 
 
 ### - NASA dataset (High Skew)
-트래픽 쏠림이 심한 환경에서 D-HASH는 기본 CH 대비 부하 표준편차(Load Stddev)를 약 26.7% 감소시키며, 시스템 안정성을 크게 높였습니다.
+트래픽 쏠림이 심한 환경에서 D-HASH는 기본 CH 대비 부하 표준편차(Load Stddev)를 약 26.7% 감소시키며, 시스템 안정성을 높였습니다.
+![NASA Dataset Graph](./images/nasa_skew_graph.png)
 
 | 알고리즘 | 처리량 (ops/s) | 평균 지연시간 (ms) | P99 지연시간 (ms) | 부하 표준편차 (낮을수록 좋음) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -130,6 +131,7 @@ ls results/
 
 ### - eBay dataset (Low Skew)
 트래픽이 비교적 고르게 분포된 환경에서도 D-HASH는 오버헤드 없이 CH보다 높은 처리량을 기록했습니다.
+![eBay Dataset Graph](./images/ebay_skew_graph.png)
 
 | 알고리즘 | 처리량 (ops/s) | 평균 지연시간 (ms) | P99 지연시간 (ms) | 부하 표준편차 |
 | :--- | :--- | :--- | :--- | :--- |
