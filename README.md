@@ -3,6 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.9-3776AB?logo=python&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-7.4.2-DC382D?logo=redis&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > **논문 제목:** D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems    
 > **저자:** 방혁, 전상훈 (수원대학교 정보보호학과)    
@@ -88,7 +89,6 @@ dhash-routing-evaluation
 
 
 ## 5. 실행 방법
-
 
 ### - 벤치마크 실행
 ~~~bash
