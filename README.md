@@ -31,13 +31,12 @@ Consistent Hashing(CH) 기반의 분산 캐시 환경에서 발생하는 Hot-key
 *(그림: TIIS 2026에 게재된 논문 초록 및 저자 정보)*
 
 ### - 실험 아키텍처
-D-HASH는 기존 Consistent Hashing 링 구조 위에 '동적 핫키 감지' 및 '윈도우 기반 스위칭' 계층을 추가한 형태입니다.
 
 ![아키텍처 다이어그램](./images/dhash_architecture.png)
 
-> **핵심 원리:**
-> 1.  **쓰기(Write):** 데이터 일관성을 위해 항상 Primary node로 고정했습니다.
-> 2.  **읽기(Read):** 평소에는 Primary node로 가지만, Hot-key로 승격되면 Primary node와 Alternate node로 트래픽을 분산했습니다.
+> D-HASH는 기존 Consistent Hashing 링 구조 위에 '동적 핫키 감지' 및 '윈도우 기반 스위칭' 계층을 추가한 형태입니다.    
+> - 쓰기(Write): 데이터 일관성을 위해 항상 Primary node로 고정했습니다.
+> - 읽기(Read): 평소에는 Primary node로 가지만, Hot-key로 승격되면 Primary node와 Alternate node로 트래픽을 분산했습니다.
 
 
 ## 2. 실험 설계
