@@ -36,13 +36,11 @@ D-HASH는 기존 Consistent Hashing 링 구조 위에 '동적 핫키 감지' 및
 ![아키텍처 다이어그램](./images/dhash_architecture.png)
 
 > **핵심 원리:**
-> 1.  **쓰기(Write):** 데이터 일관성을 위해 항상 Primary Node로 고정.
-> 2.  **읽기(Read):** 평소에는 주 노드로 가지만, Hot-key로 승격되면 Primary node와 Alternate node로 트래픽을 분산.
+> 1.  **쓰기(Write):** 데이터 일관성을 위해 항상 Primary node로 고정했습니다.
+> 2.  **읽기(Read):** 평소에는 Primary node로 가지만, Hot-key로 승격되면 Primary node와 Alternate node로 트래픽을 분산했습니다.
 
 
 ## 2. 실험 설계
-
-논문의 검증 논리를 코드로 구현하기 위해 다음과 같이 설계했습니다.
 
 ### - 핫키 승격
 - 각 키의 읽기 횟수를 모니터링하여, 임계값 T를 초과하면 Hot-key로 간주합니다.
