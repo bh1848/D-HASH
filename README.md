@@ -119,23 +119,23 @@ ls results/
 ### - NASA dataset (High Skew)
 ![NASA Dataset Graph](./images/nasa_skew_graph.png)
 
-| 알고리즘 | 처리량 (ops/s) | 평균 지연시간 (ms) | P99 지연시간 (ms) | 부하 표준편차 (낮을수록 좋음) |
+| Algorithm | Throughput (ops/s) | Avg Latency (ms) | P99 Latency (ms) | Load Stddev (낮을수록 좋음) |
 | :--- | :--- | :--- | :--- | :--- |
 | **CH** | 159,608 | 0.016 | 0.078 | **725,757** |
 | **WCH** | 156,804 | 0.016 | 0.076 | 726,973 |
 | **HRW** | 153,473 | 0.018 | 0.083 | 623,144 |
 | **D-HASH** | **159,927** | **0.018** | **0.078** | **531,824** |
 
-> - 트래픽 쏠림이 심한 환경에서 D-HASH는 기본 CH 대비 부하 표준편차(Load Stddev)를 약 26.7% 감소시키며, 특정 노드에 부하가 집중되는 현상을 막았습니다.
+> **Note:** 트래픽 쏠림이 심한 환경에서 D-HASH는 기본 CH 대비 부하 표준편차(Load Stddev)를 약 26.7% 감소시키며, 특정 노드에 부하가 집중되는 현상을 막았습니다.
 
 ### - eBay dataset (Low Skew)
 ![eBay Dataset Graph](./images/ebay_skew_graph.png)
 
-| 알고리즘 | 처리량 (ops/s) | 평균 지연시간 (ms) | P99 지연시간 (ms) | 부하 표준편차 |
+| Algorithm | Throughput (ops/s) | Avg Latency (ms) | P99 Latency (ms) | Load Stddev |
 | :--- | :--- | :--- | :--- | :--- |
 | **CH** | 183,629 | 0.015 | 0.061 | 258 |
 | **D-HASH** | **193,020** | **0.015** | **0.062** | **258** |
-> - 트래픽이 비교적 고르게 분포된 환경에서도 D-HASH는 오버헤드 없이 CH보다 높은 처리량을 기록했습니다.
+> **Note:** 트래픽이 비교적 고르게 분포된 환경에서도 D-HASH는 오버헤드 없이 CH보다 높은 처리량을 기록했습니다.
 
 
 ## 7. 트러블 슈팅
