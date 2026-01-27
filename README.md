@@ -1,9 +1,5 @@
 # ⚖️ D-HASH: Dynamic Hot-key Aware Scalable Hashing
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python)
-![Redis](https://img.shields.io/badge/Redis-7.4-red?logo=redis)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
-
 > **관련 논문:** [D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems (TIIS Submitted)]
 > **저자:** 방혁, 전상훈
 
@@ -11,17 +7,17 @@
 기존 Consistent Hashing(CH)의 한계를 넘어, **런타임 트래픽 분석을 통해 동적으로 부하를 분산**시켰을 때 클러스터 안정성이 얼마나 개선되는지 수치로 검증했습니다.
 
 ## 📋 목차
-1. [프로젝트 개요](#1-프로젝트-개요)
-2. [핵심 설계](#2-핵심-설계)
+1. [개요](#1-개요)
+2. [실험 설계](#2-실험-설계)
 3. [실험 환경](#3-실험-환경)
 4. [프로젝트 구조](#4-프로젝트-구조)
 5. [실행 방법](#5-실행-방법)
 6. [실험 결과](#6-실험-결과)
-7. [결론 및 고찰](#7-결론-및-고찰)
+7. [결론](#7-결론)
 
----
 
-## 1. 프로젝트 개요
+
+## 1. 개요
 
 분산 시스템에서 "특정 키에 트래픽이 쏠리는 문제(Hot-Key)"는 단순한 서버 증설(Scale-out)만으로는 해결되지 않습니다.
 이번 연구에서는 무거운 중앙 관리 서버 없이, 클라이언트 사이드 라우팅만으로 **Hot-Key 부하를 자동으로 감지하고 분산**하는 D-HASH 기법을 구현하고, 기존 알고리즘 대비 성능 이점을 증명하고자 했습니다.
@@ -39,7 +35,7 @@
 > * **알고리즘 비교:** `CH`, `WCH(Weighted)`, `HRW(Rendezvous)`, `D-HASH` 4가지 기법 비교
 > * **워크로드 재현:** NASA HTTP 로그 및 eBay 경매 데이터를 사용하여 실제 트래픽 패턴(Zipfian Skew)을 시뮬레이션
 
----
+
 
 ## 2. 핵심 설계
 
@@ -63,7 +59,7 @@ def get_node(self, key, op="read"):
 * **목적:** 다양한 파라미터($\alpha$ 값, 윈도우 크기 등) 변화에 따른 성능 추이를 일관되게 측정
 * **구현:** `cli.py`를 통해 [파이프라인 최적화] → [마이크로 벤치마크] → [메인 성능 평가]로 이어지는 **단계별 실험 파이프라인**을 구축하여 재현성(Reproducibility)을 확보했습니다.
 
----
+
 
 ## 3. 실험 환경
 
@@ -73,7 +69,7 @@ def get_node(self, key, op="read"):
 * **Variables:** Zipfian Skew Parameter ($\alpha \in \{1.1, 1.3, 1.5\}$)
 * **Metrics:** Throughput(ops/s), Tail Latency(P99), Load Standard Deviation
 
----
+
 
 ## 4. 프로젝트 구조
 
@@ -87,7 +83,7 @@ dhash_experiments/
 └── workloads.py     # 데이터셋 파싱 및 워크로드 생성기
 ~~~
 
----
+
 
 ## 5. 실행 방법
 
@@ -109,7 +105,7 @@ python -m dhash_experiments.cli --mode zipf --dataset ALL --repeats 10
 python -m dhash_experiments.cli --mode microbench --repeats 10
 ~~~
 
----
+
 
 ## 6. 실험 결과
 
@@ -129,16 +125,15 @@ NASA 데이터셋($\alpha=1.5$) 기준 성능 비교 결과입니다.
 * **부하 균형 개선:** D-HASH는 기존 CH 대비 노드 간 부하 편차(Standard Deviation)를 **약 27% 감소**시켜 특정 노드의 과부하를 효과적으로 해소했습니다.
 * **Zero Overhead:** 복잡한 로직이 추가되었음에도 불구하고, 처리량(Throughput)과 지연 시간(Latency)에서 손해를 보지 않음을 입증했습니다.
 
----
 
-## 7. 결론 및 고찰
+## 7. 결론
 
-### 연구의 한계 (Limitations)
+### 연구의 한계
 * **Network Latency:** Docker 컨테이너 간 통신 환경으로, 실제 IDC 간의 네트워크 지연(RTT) 변수는 완벽히 반영되지 않았습니다.
 * **Client-Side Bottleneck:** 단일 클라이언트에서 부하를 생성했기에, 클라이언트 자체의 리소스 한계가 전체 처리량에 영향을 줄 수 있습니다.
 
-### 핵심 인사이트 (Key Insights)
-이번 프로젝트를 통해 도출한 기술적 결론은 다음과 같습니다.
+### Insights
+이번 프로젝트를 통해 도출한 결론은 다음과 같습니다.
 
 1. **소프트웨어 라우팅의 효율성 입증:**
    하드웨어를 무작정 늘리지 않아도, **알고리즘 개선만으로 클러스터의 전체적인 부하 균형을 30% 가까이 개선**할 수 있음을 확인했습니다. 비용 효율적인 아키텍처 설계의 중요성을 체감했습니다.
