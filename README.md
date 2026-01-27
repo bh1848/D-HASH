@@ -65,8 +65,8 @@ D-HASH는 기존 Consistent Hashing 링 구조 위에 '동적 핫키 감지' 및
 - **하드웨어:** Intel Core i5-1340P, 16GB RAM, Docker (WSL2)
 - **소프트웨어:** Redis 7.4.2 (라우팅 로직 검증을 위해 클러스터 모드 Off)
 - **데이터셋:**
-    -  NASA HTTP Logs: 트래픽 쏠림이 매우 심한 환경 (High Skew)
-    -  eBay Auction Logs: 트래픽이 비교적 고른 환경 (Low Skew)
+    -  NASA HTTP Logs: High Skew
+    -  eBay Auction Logs: Low Skew
 - **파라미터 설정:**
     - Replication Factor = 2
     - Threshold (T) = 300
@@ -143,5 +143,5 @@ ls results/
 본 연구를 통해 제안된 D-HASH는 다음과 같은 성과를 입증했습니다.
 
 1. 핫키 발생 시 부하 불균형을 획기적으로 줄여 시스템 전체의 리소스 활용도를 높였습니다.
-2. 트래픽 패턴(Skew)에 상관없이 안정적인 성능을 유지하며, 오버헤드가 거의 없습니다.
+2. Skew에 상관없이 안정적인 성능을 유지하며, 오버헤드가 거의 없습니다.
 3. 중앙 관리 서버 없이 클라이언트 사이드 로직만으로 동작하므로, 실제 상용 분산 시스템에 즉시 적용 가능합니다.
