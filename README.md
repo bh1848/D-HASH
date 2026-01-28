@@ -77,17 +77,16 @@ docker-compose logs -f runner
 
 <br>
 
-## 📊 Benchmark Result
-Our experiments demonstrate significant improvements in load distribution stability using the NASA HTTP Access Log dataset (High Skew).
+## 📊 Benchmark Result (Reproducible)
 
-| Algorithm | Throughput (ops/s) | Load Std Dev (Lower is better) |
-| :--- | :--- | :--- |
-| Consistent Hashing (CH) | 159,608 | 725,757 |
-| **D-HASH (Ours)** | **159,927** | **531,824** |
+This experiment uses a **Synthetic Zipfian Workload** (Alpha=1.5, High Skew) generated in real-time to ensure full reproducibility without external dataset dependencies.
 
-> **Performance Note:** D-HASH achieved a **26.7% reduction in load standard deviation** compared to CH, effectively mitigating hot-spot issues while maintaining high throughput.
->
-> *These results are reproduced based on the experimental setup described in Section 4 of the paper. Please refer to the paper or [**docs/REPORT_KR.md**](./docs/REPORT_KR.md) for full evaluation details including eBay dataset results.*
+| Algorithm | Throughput (ops/s) | Load Std Dev (Lower is better) | Improvement |
+| :--- | :--- | :--- | :--- |
+| Consistent Hashing (CH) | 179,902 | 49,944 | - |
+| **D-HASH (Ours)** | **167,092** | **33,054** | **🔻 33.8%** |
+
+> **Key Finding:** In high-skew environments ($\alpha=1.5$), D-HASH reduces load imbalance (Standard Deviation) by **33.8%** compared to CH, with only a marginal 7% trade-off in throughput, demonstrating the efficiency of our dynamic routing strategy.
 
 <br>
 
