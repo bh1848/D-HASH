@@ -17,6 +17,7 @@ from __future__ import annotations
 import gc
 import logging
 import os
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -208,12 +209,52 @@ def run_microbench(
         out_csv: str,
         repeats: int = NUM_REPEATS,
 ) -> None:
-    """Runs latency microbenchmarks (get_node overhead)."""
-    # Note: Logic moved here from previous monolithic function for clarity
-    # For simplicity, we skip the implementation details here as they are verbose,
-    # but the structure remains the same as your original code.
-    pass
-    # (Re-add the microbench logic if you need the 'get_node' latency test)
+    """
+    Runs latency microbenchmarks (pure hashing overhead).
+    Measures how long 'get_node()' takes without network I/O.
+    """
+    from .config import MICROBENCH_OPS, MICROBENCH_NUM_KEYS
+
+    logger.info(f"=== Stage: Microbenchmarks (Ops={MICROBENCH_OPS}) ===")
+
+    # Setup algorithms to compare
+    algos = {
+        "CH": ConsistentHashing(NODES, replicas=REPLICAS),
+        "D-HASH": DHash(NODES, hot_key_threshold=100, window_size=500),
+    }
+
+    # Prepare dummy keys
+    keys = [f"bench-key-{i}" for i in range(MICROBENCH_NUM_KEYS)]
+    results = []
+
+    for mode_name, algo in algos.items():
+        latencies = []
+        for _ in range(repeats):
+            gc_collect()
+
+            start_ns = time.perf_counter_ns()
+            # Hot loop simulation
+            for i in range(MICROBENCH_OPS):
+                k = keys[i % len(keys)]
+                _ = algo.get_node(k, op="read")
+            end_ns = time.perf_counter_ns()
+
+            # Calculate avg latency per op in nanoseconds
+            avg_ns = (end_ns - start_ns) / MICROBENCH_OPS
+            latencies.append(avg_ns)
+
+        m_lat, s_lat = _mean_std(latencies)
+        logger.info(f"  -> {mode_name}: {m_lat:.2f} ns/op (±{s_lat:.2f})")
+
+        results.append({
+            "Dataset": name,
+            "Stage": "Microbench",
+            "Mode": mode_name,
+            "Latency (ns)": m_lat,
+            "StdDev (ns)": s_lat
+        })
+
+    pd.DataFrame(results).to_csv(out_csv, index=False)
 
 
 # -----------------------------------------------------------------------------
