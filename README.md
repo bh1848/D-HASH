@@ -45,11 +45,15 @@ D-HASH/
 │   └── dhash_experiments/
 │       ├── algorithms.py   # Core Algorithm (DHash class & Routing Logic)
 │       ├── bench.py        # Benchmark & Metrics Collection
-│       ├── workloads.py    # Zipfian Workload Generator
-│       └── stages.py       # Experiment Stage Controller
+│       ├── cli.py          # Entry Point (Argument Parsing)
+│       ├── config.py       # Configuration & Hyperparameters
+│       ├── stages.py       # Experiment Stage Controller
+│       └── workloads.py    # Zipfian Workload Generator
 ├── docs/                   # Experiment Reports & Figures
+├── results/                # Benchmark Results (CSV) & Metadata
 ├── Dockerfile.runner       # Simulation Environment
 ├── docker-compose.yml      # Orchestration (Redis Cluster + Runner)
+├── requirements.txt        # Python Dependencies
 └── README.md
 ~~~
 
@@ -63,6 +67,8 @@ You can run the simulation using Docker Compose to observe the load balancing ef
 - (Optional) Python 3.9+ (if running locally without Docker)
 
 ### 2. Build & Run
+The default command runs the **full experiment suite** (Pipeline Sweep → Ablation → Zipf Benchmark) using synthetic data.
+
 ~~~bash
 # Clone this repository
 git clone https://github.com/bh1848/D-HASH.git
