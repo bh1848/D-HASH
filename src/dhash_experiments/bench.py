@@ -156,7 +156,6 @@ def benchmark_cluster(
     value_bytes: int = VALUE_BYTES,
 ) -> Dict[str, Any]:
 
-    #버킷 생성 로직
     write_buckets: Dict[str, List[Any]] = defaultdict(list)
     read_buckets: Dict[str, List[Any]] = defaultdict(list)
 
@@ -164,12 +163,11 @@ def benchmark_cluster(
         p_node = sharding.get_node(k, op="write")
         write_buckets[p_node].append(k)
 
-        # D-HASH인 경우 Alternate 노드에도 동일한 데이터를 주입 (Controlled Initialization)
         if hasattr(sharding, "_ensure_alternate"):
-            sharding._ensure_alternate(k)  # Alternate 노드 결정 강제
+            sharding._ensure_alternate(k)
             a_node = sharding.alt.get(k)
             if a_node and a_node != p_node:
-                write_buckets[a_node].append(k)  # Alternate 노드도 쓰기 대상에 추가
+                write_buckets[a_node].append(k)
 
         read_buckets[sharding.get_node(k, op="read")].append(k)
 

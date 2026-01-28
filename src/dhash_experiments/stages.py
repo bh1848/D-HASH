@@ -174,7 +174,7 @@ def run_pipeline_sweep(
 
             for mode in modes:
                 if mode == "D-HASH":
-                    W = B  # align window to pipeline to avoid batch fragmentation
+                    W = B
                     params = {"T": max(30, B), "W": W}
                     thr, avg, p95, p99, sd = run_single_mode(
                         kz,
@@ -281,7 +281,6 @@ def run_microbench(
     results: List[Tuple[str, str, float]] = []
 
     for rep in range(repeats):
-        # 동일 반복 내 공정 비교: 같은 키 순서를 모든 알고리즘에 적용 (seed=SEED+rep)
         ns = _microbench_once_get_node("CH", num_ops, num_keys, rng_seed=SEED + rep)
         results.append(("CH", "cold", ns))
 
