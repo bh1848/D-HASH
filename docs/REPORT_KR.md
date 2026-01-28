@@ -1,9 +1,10 @@
-# ⚖️ D-HASH: Dynamic Hot-key Aware Scalable Hashing
+# D-HASH: Dynamic Hot-key Aware Scalable Hashing
 
-![Python](https://img.shields.io/badge/Python-3.9-3776AB?logo=python&logoColor=white)
+[![Paper](https://img.shields.io/badge/Paper-SCIE%20Accepted-blue)]()
+[![License](https://img.shields.io/badge/License-MIT-green)](../LICENSE)
+![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-7.4.2-DC382D?logo=redis&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > **논문 제목:** D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems     
 > **저자:** 방혁, 전상훈 (수원대학교 정보보호학과)     
