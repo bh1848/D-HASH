@@ -1,73 +1,54 @@
+"""
+Workload Generation Utilities.
+
+This module is responsible for generating synthetic traffic patterns used in experiments.
+It specifically implements the Zipfian (Power-law) distribution generator, 
+which mimics real-world access patterns where a few keys (hot-keys) account for 
+the majority of the traffic.
+
+Note:
+    Legacy data loaders (NASA/eBay) have been removed to ensure 
+    standalone reproducibility without external dataset dependencies.
+"""
 from __future__ import annotations
 
-import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List
 
 import numpy as np
-import pandas as pd
 
 from .config import NP_RNG
 
-# CLF-like NASA log parser
-_CLF_RE = re.compile(
-    r'^(?P<host>\S+) \S+ \S+ \[(?P<time>.*?)\] '
-    r'"(?P<method>\S+)\s+(?P<url>\S+)\s+(?P<proto>[^"]+)" '
-    r"(?P<status>\d{3}) (?P<size>\S+)"
-)
-
-
-def load_logs_dataset(path: str) -> Tuple[List[Any], Dict[str, Any]]:
-
-    keys: List[str] = []
-    meta: Dict[str, Any] = {}
-    with open(path, "r", encoding="ISO-8859-1") as f:
-        for line in f:
-            m = _CLF_RE.match(line.strip())
-            if not m:
-                continue
-            url = m.group("url")
-            status = int(m.group("status"))
-            if not url or status == 0:
-                continue
-            keys.append(url)
-            meta.setdefault(url, []).append(
-                {
-                    "host": m.group("host"),
-                    "timestamp": m.group("time"),
-                    "method": m.group("method"),
-                    "protocol": m.group("proto"),
-                    "status": status,
-                    "size": m.group("size"),
-                }
-            )
-    return keys, meta
-
-
-def load_csv_dataset(
-    path: str,
-    key_column: str = "auctionid",
-    natural_hot_threshold: Optional[int] = None,
-) -> Tuple[List[Any], Dict[str, Any]]:
-
-    df = pd.read_csv(path)
-    if key_column not in df.columns:
-        raise ValueError(f"'{key_column}' column not found in CSV.")
-    vc = df[key_column].value_counts()
-    if natural_hot_threshold is None:
-        keys = vc.index.sort_values().tolist()
-    else:
-        keys = vc[vc <= natural_hot_threshold].index.sort_values().tolist()
-    meta = {str(k): df[df[key_column] == k].to_dict(orient="records") for k in keys}
-    return [str(k) for k in keys], meta
-
 
 def generate_zipf_workload(keys: List[Any], size: int, alpha: float = 1.1) -> List[Any]:
-   
+    """
+    Generates a sequence of key accesses following a Zipfian distribution.
+
+    Args:
+        keys: The universe of available keys. The first key in the list will be 
+              assigned Rank 1 (most frequent), the second Rank 2, etc.
+        size: Total number of access requests to generate (length of the output list).
+        alpha: The skewness parameter (alpha > 1). Higher alpha means more skew 
+               (more traffic concentrated on fewer keys).
+
+    Returns:
+        A list of keys representing the request stream.
+    """
     if not keys:
         raise ValueError("Key list is empty.")
+
     n = len(keys)
+
+    # 1. Calculate Zipfian probabilities for each rank
+    # Rank 1 has weight 1^(-alpha), Rank 2 has 2^(-alpha), ...
     ranks = np.arange(1, n + 1, dtype=np.float64)
     weights = ranks ** (-alpha)
-    p = weights / weights.sum()
-    idx = NP_RNG.choice(n, size=size, replace=True, p=p)
-    return [keys[i] for i in idx]
+
+    # 2. Normalize to create a probability distribution (sum = 1)
+    probabilities = weights / weights.sum()
+
+    # 3. Sample indices based on the calculated probabilities
+    # Using the global pre-seeded RNG from config for reproducibility
+    indices = NP_RNG.choice(n, size=size, replace=True, p=probabilities)
+
+    # 4. Map indices back to actual key objects
+    return [keys[i] for i in indices]

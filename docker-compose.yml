@@ -4,6 +4,7 @@ services:
   redis-1:
     image: redis:7.4.2
     container_name: redis-1
+    # Disable persistence for pure in-memory benchmarking
     command: ["redis-server", "--appendonly", "no", "--save", ""]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -64,6 +65,7 @@ services:
     container_name: runner
     working_dir: /workspace
     environment:
+      # Ensure consistent hash randomization for reproducibility
       - PYTHONHASHSEED=123
     volumes:
       - .:/workspace
@@ -79,6 +81,8 @@ services:
         condition: service_healthy
       redis-5:
         condition: service_healthy
+    # Auto-start experiments when 'docker-compose up' is run
+    command: ["python", "-m", "dhash_experiments.cli", "--mode", "all"]
 
 networks:
   redis-cluster:
