@@ -115,4 +115,4 @@ If you find this code useful for your research, please cite our paper:
 **Bang Hyeok**
 - Dept. of Information Security, The University of Suwon
 - GitHub: [@bh1848](https://github.com/bh1848)
-- Contact: banghyeok@suwon.ac.kr
+- Contact: bh1848@naver.com
