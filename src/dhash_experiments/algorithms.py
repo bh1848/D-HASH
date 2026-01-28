@@ -95,7 +95,7 @@ class WeightedConsistentHashing:
 
 
 # -----------------------------------------------------------------------------
-# Rendezvous / HRW
+# Rendezvous (HRW)
 # -----------------------------------------------------------------------------
 class RendezvousHashing:
 
@@ -118,9 +118,10 @@ class RendezvousHashing:
         return best_node
 
 
-# -----------------------------------------------------------------------------
-# D-HASH (R=2, Sticky-Window Alternation)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# [CORE ALGORITHM] D-HASH (Proposed Method)
+# Implementation of Dynamic Hot-key Aware Scalable Hashing
+# =============================================================================
 class DHash:
 
     __slots__ = ("nodes", "T", "W", "reads", "alt", "ch", "hot_key_threshold")

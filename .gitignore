@@ -26,17 +26,8 @@ Thumbs.db
 .idea/
 .vscode/
 
-# ===== Experiment Outputs =====
-results/*
-!results/.gitkeep
-*.csv
-
 # ===== Logs =====
 *.log
 
 # ===== Docker =====
 .docker/
-
-# ===== Raw Datasets =====
-data/*
-!data/.gitkeep
