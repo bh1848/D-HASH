@@ -27,12 +27,12 @@ Consistent Hashing(CH) 기반의 분산 캐시 환경에서 발생하는 Hot-key
 ## 1. 개요
 
 ### - 관련 논문
-![논문 표지](./images/paper_header.png)    
+![논문 표지](../images/paper_header.png)    
 *(그림: TIIS 2026에 게재된 논문 초록 및 저자 정보)*
 
 ### - 실험 아키텍처
 
-![아키텍처 다이어그램](./images/dhash_architecture.png)
+![아키텍처 다이어그램](../images/dhash_architecture.png)
 
 > D-HASH는 기존 Consistent Hashing 링 구조 위에 '동적 핫키 감지' 및 '윈도우 기반 스위칭' 계층을 추가한 형태입니다.    
 > - 쓰기(Write): 데이터 일관성을 위해 항상 Primary node로 고정했습니다.
@@ -114,7 +114,7 @@ ls results/
 
 
 ### - NASA dataset (High Skew)
-![NASA Dataset Graph](./images/nasa_skew_graph.png)
+![NASA Dataset Graph](../images/nasa_skew_graph.png)
 
 | Algorithm | Throughput (ops/s) | Avg Latency (ms) | P99 Latency (ms) | Load Stddev (낮을수록 좋음) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -126,7 +126,7 @@ ls results/
 > **Note:** 트래픽 쏠림이 심한 환경에서 D-HASH는 기본 CH 대비 부하 표준편차(Load Stddev)를 약 26.7% 감소시키며, 특정 노드에 부하가 집중되는 현상을 막았습니다.
 
 ### - eBay dataset (Low Skew)
-![eBay Dataset Graph](./images/ebay_skew_graph.png)
+![eBay Dataset Graph](../images/ebay_skew_graph.png)
 
 | Algorithm | Throughput (ops/s) | Avg Latency (ms) | P99 Latency (ms) | Load Stddev |
 | :--- | :--- | :--- | :--- | :--- |
