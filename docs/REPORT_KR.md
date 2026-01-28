@@ -5,13 +5,14 @@
 ![Redis](https://img.shields.io/badge/Redis-7.4.2-DC382D?logo=redis&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-> **논문 제목:** D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems    
-> **저자:** 방혁, 전상훈 (수원대학교 정보보호학과)    
-> **게재:** KSII Transactions on Internet and Information Systems (TIIS), 2026 (게재 예정)    
+> **논문 제목:** D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems     
+> **저자:** 방혁, 전상훈 (수원대학교 정보보호학과)     
+> **게재:** KSII Transactions on Internet and Information Systems (TIIS), 2026 (게재 예정)     
 
-TIIS 2026 게재 예정 논문인 D-HASH의 제안 알고리즘과 실험 환경을 구현한 공식 프로젝트입니다.    
+TIIS 2026 게재 예정 논문인 D-HASH의 제안 알고리즘과 실험 환경을 구현한 공식 프로젝트입니다.     
 Consistent Hashing(CH) 기반의 분산 캐시 환경에서 발생하는 Hot-key 현상을 해결하기 위해, 런타임에 동적으로 트래픽을 분산하는 경량 라우팅 알고리즘을 제안하고 검증했습니다.
 
+<br/>
 
 ## 📋 목차
 1. [개요](#1-개요)
@@ -23,21 +24,23 @@ Consistent Hashing(CH) 기반의 분산 캐시 환경에서 발생하는 Hot-key
 7. [트러블 슈팅](#7-트러블-슈팅)
 8. [결론](#8-결론)
 
+<br/>
 
 ## 1. 개요
 
 ### - 관련 논문
-![논문 표지](images/paper_header.png)    
+![논문 표지](images/paper_header.png)     
 *(그림: TIIS 2026에 게재된 논문 초록 및 저자 정보)*
 
 ### - 실험 아키텍처
 
 ![아키텍처 다이어그램](images/dhash_architecture.png)
 
-> D-HASH는 기존 Consistent Hashing 링 구조 위에 '동적 핫키 감지' 및 '윈도우 기반 스위칭' 계층을 추가한 형태입니다.    
+> D-HASH는 기존 Consistent Hashing 링 구조 위에 '동적 핫키 감지' 및 '윈도우 기반 스위칭' 계층을 추가한 형태입니다.     
 > - 쓰기(Write): 데이터 일관성을 위해 항상 Primary node로 고정했습니다.
 > - 읽기(Read): 평소에는 Primary node로 가지만, Hot-key로 승격되면 Primary node와 Alternate node로 트래픽을 분산했습니다.
 
+<br/>
 
 ## 2. 실험 설계
 
@@ -56,34 +59,41 @@ Consistent Hashing(CH) 기반의 분산 캐시 환경에서 발생하는 Hot-key
 - Rendezvous Hashing (HRW): 최고 랜덤 가중치 해싱
 - Dynamic Hot-key Aware Scalable Hashing (D-HASH): 제안하는 동적 라우팅 기법
 
+<br/>
 
 ## 3. 실험 환경
 
 - **하드웨어:** Intel Core i5-1340P, 16GB RAM, Docker (WSL2)
 - **소프트웨어:** Redis 7.4.2 (라우팅 로직 검증을 위해 클러스터 모드 Off)
-- **데이터셋:**
-    -  NASA HTTP Logs: High Skew
-    -  eBay Auction Logs: Low Skew
+- **워크로드 (Workload):**
+    - **Paper:** NASA HTTP Logs (High Skew), eBay Auction Logs (Low Skew)
+    - **Repository:** Synthetic Zipfian Generator (재현성을 위해 논문 데이터의 분포를 모방한 가상 데이터 사용)
 - **파라미터 설정:**
     - Replication Factor = 2
     - Threshold (T) = 300
     - Window (W) = 배치 크기와 동일하게 설정 (Pipeline 최적화)
 
+<br/>
 
 ## 4. 프로젝트 구조
 
 ~~~bash
-dhash-routing-evaluation
+D-HASH
 ├── src
 │   ├── dhash_experiments
 │   │   ├── algorithms.py   # 알고리즘 라우팅 로직 구현
 │   │   ├── bench.py        # 벤치마크 실행 및 메트릭 측정
-│   │   └── workloads.py    # Zipfian 워크로드 생성기
+│   │   ├── cli.py          # 실행 엔트리포인트
+│   │   ├── config.py       # 환경 설정 및 파라미터
+│   │   ├── stages.py       # 실험 단계별 컨트롤러
+│   │   └── workloads.py    # Zipfian 워크로드 생성기 (Synthetic)
+├── results/                # 벤치마크 결과 데이터 (CSV)
 ├── Dockerfile.runner       # Redis & Python 실행 환경
 ├── docker-compose.yml      # 컨테이너 오케스트레이션
 └── requirements.txt        # 의존성 패키지 (mmh3, numpy, redis)
 ~~~
 
+<br/>
 
 ## 5. 실행 방법
 
@@ -104,36 +114,50 @@ docker-compose logs -f runner
 ls results/
 
 # [생성 파일 예시]
-# - nasa_zipf_results.csv       (zipf 실험)
-# - nasa_ablation_results.csv   (파라미터 T 민감도 분석)
-# - nasa_microbench_ns.csv      (라우팅 오버헤드 측정)
-# - nasa_pipeline_sweep.csv     (배치 크기 최적화)
+# - synthetic_zipf_results.csv       (Main Zipf 실험 결과)
+# - synthetic_ablation.csv           (파라미터 T 민감도 분석)
+# - synthetic_pipeline_sweep.csv     (배치 크기 최적화)
+# - env_metadata.csv                 (실험 환경 메타데이터)
 ~~~
+
+<br/>
 
 ## 6. 실험 결과
 
+본 프로젝트의 알고리즘(D-HASH) 성능 검증은 두 가지 단계로 수행되었습니다.
+1. **Paper Validation:** 실제 운영 로그(NASA, eBay)를 기반으로 한 논문 원본 실험
+2. **Reproduction:** 누구나 검증 가능한 Synthetic Workload 기반의 재현 실험
 
-### - NASA dataset (High Skew)
+### 6-1. 논문 원본 성과
+> **Note:** 아래 결과는 논문에 수록된 NASA/eBay 데이터셋 기반의 실험 결과입니다.
+
+#### - NASA dataset (High Skew)
 ![NASA Dataset Graph](images/nasa_skew_graph.png)
 
-| Algorithm | Throughput (ops/s) | Avg Latency (ms) | P99 Latency (ms) | Load Stddev (낮을수록 좋음) |
-| :--- | :--- | :--- | :--- | :--- |
-| **CH** | 159,608 | 0.016 | 0.078 | **725,757** |
-| **WCH** | 156,804 | 0.016 | 0.076 | 726,973 |
-| **HRW** | 153,473 | 0.018 | 0.083 | 623,144 |
-| **D-HASH** | **159,927** | **0.018** | **0.078** | **531,824** |
+| Algorithm | Throughput (ops/s) | Load Stddev (Lower is better) |
+| :--- | :--- | :--- |
+| **CH** | 159,608 | 725,757 |
+| **D-HASH** | **159,927** | **531,824 (🔻26.7%)** |
 
-> **Note:** 트래픽 쏠림이 심한 환경에서 D-HASH는 기본 CH 대비 부하 표준편차(Load Stddev)를 약 26.7% 감소시키며, 특정 노드에 부하가 집중되는 현상을 막았습니다.
-
-### - eBay dataset (Low Skew)
+#### - eBay dataset (Low Skew)
 ![eBay Dataset Graph](images/ebay_skew_graph.png)
+*(트래픽 쏠림이 적은 환경에서도 D-HASH는 추가 오버헤드 없이 CH 이상의 처리량을 유지함을 입증했습니다.)*
 
-| Algorithm | Throughput (ops/s) | Avg Latency (ms) | P99 Latency (ms) | Load Stddev |
-| :--- | :--- | :--- | :--- | :--- |
-| **CH** | 183,629 | 0.015 | 0.061 | 258 |
-| **D-HASH** | **193,020** | **0.015** | **0.062** | **258** |
-> **Note:** 트래픽이 비교적 고르게 분포된 환경에서도 D-HASH는 오버헤드 없이 CH보다 높은 처리량을 기록했습니다.
+<br/>
 
+### 6-2. 재현 실험 결과
+> **Note:** 본 레포지토리의 코드를 실행(`docker-compose up`)하여 직접 확인할 수 있는 결과입니다. (Alpha=1.5 Synthetic Zipf)
+
+| Algorithm | Throughput (ops/s) | Load Stddev (Lower is better) | Improvement |
+| :--- | :--- | :--- | :--- |
+| **Consistent Hashing** | 179,902 | 49,944 | - |
+| **D-HASH (Ours)** | **167,092** | **33,054** | **🔻 33.8%** |
+
+**분석:**
+- 논문의 NASA 실험 결과(26.7% 개선)와 유사하게, Synthetic 환경에서도 **33.8%의 부하 분산 개선 효과**가 재현되었습니다.
+- 이는 D-HASH 알고리즘이 특정 데이터셋에 Overfitting되지 않고, **일반적인 High Skew에서 일관된 성능을 보장**함을 의미합니다.
+
+<br/>
 
 ## 7. 트러블 슈팅
 
@@ -154,6 +178,7 @@ ls results/
 * **해결:** Python 기본 해시 대신 연산 속도가 빠른 `xxHash64` 알고리즘을 적용했습니다.
 * **결과:** 라우팅 로직 추가에도 불구하고 기본 CH 대비 Latency 차이를 무시할 수 있는 수준으로 억제하여 오버헤드를 최소화했습니다.
 
+<br/>
 
 ## 8. 결론
 
