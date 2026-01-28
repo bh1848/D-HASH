@@ -1,0 +1,2 @@
+seed,python,numpy,redis_py,hiredis,nodes,replicas,repeats
+1337,3.11.13,2.3.4,6.4.0,True,"redis-1,redis-2,redis-3,redis-4,redis-5",100,10
