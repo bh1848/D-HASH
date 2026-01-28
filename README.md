@@ -1,6 +1,6 @@
 # D-HASH: Dynamic Hot-key Aware Scalable Hashing
 
-[![Paper](https://img.shields.io/badge/Paper-SCIE%20Accepted-blue)](논문링크)
+[![Paper](https://img.shields.io/badge/Paper-SCIE%20Accepted-blue)]()
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)]()
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)]()
@@ -19,7 +19,7 @@ This repository provides the **core implementation** of D-HASH, a novel hashing 
 **Key Features:**
 - **Dynamic Detection:** Real-time identification of hot-keys based on access frequency using a client-side counter.
 - **Scalable Hashing:** Adaptive redistribution of hot-keys to minimize server overload without full data migration.
-- **High Performance:** Reduces load standard deviation (imbalance) by **up to 26.7%** in high-skew workloads compared to Consistent Hashing.
+- **High Performance:** Reduces load standard deviation (imbalance) by **up to 33.8%** in high-skew workloads compared to Consistent Hashing.
 
 <br>
 
@@ -59,6 +59,37 @@ D-HASH/
 
 <br>
 
+## 💻 Core Logic Preview
+D-HASH uses `__slots__` for memory optimization and isolates the routing logic for seamless integration.
+
+~~~python
+# src/dhash_experiments/algorithms.py
+
+class DHash:
+    # Memory optimization for high-concurrency simulation
+    __slots__ = ("nodes", "T", "W", "reads", "alt", "ch")
+
+    def get_node(self, key: Any, op: str = "read") -> str:
+        # 1. Write Consistency: Always route to Primary
+        if op == "write":
+            return self._primary_safe(key)
+
+        # 2. Hot-key Detection & Dynamic Routing
+        cnt = self.reads.get(key, 0) + 1
+        self.reads[key] = cnt
+        
+        # If hot-key, switch to Alternate Node based on Window Epoch
+        if cnt >= self.T:
+            self._ensure_alternate(key)
+            delta = cnt - self.T
+            epoch = (delta - self.W) // self.W
+            return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)
+
+        return self._primary_safe(key)
+~~~
+
+<br>
+
 ## 🚀 How to Run
 You can run the simulation using Docker Compose to observe the load balancing effect.
 
@@ -85,7 +116,7 @@ docker-compose logs -f runner
 
 ## 📊 Benchmark Result (Reproducible)
 
-This experiment uses a **Synthetic Zipfian Workload** (Alpha=1.5, High Skew) generated in real-time to ensure full reproducibility without external dataset dependencies.
+This experiment uses a **Synthetic Zipfian Workload** ($\alpha=1.5$, High Skew) generated in real-time to ensure full reproducibility without external dataset dependencies.
 
 | Algorithm | Throughput (ops/s) | Load Std Dev (Lower is better) | Improvement |
 | :--- | :--- | :--- | :--- |
@@ -115,4 +146,4 @@ If you find this code useful for your research, please cite our paper:
 **Bang Hyeok**
 - Dept. of Information Security, The University of Suwon
 - GitHub: [@bh1848](https://github.com/bh1848)
-- Contact: bh1848@naver.com
+- Contact: [bh1848@naver.com](mailto:bh1848@naver.com)
