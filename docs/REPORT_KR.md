@@ -53,7 +53,7 @@
 
 ## 2. 시스템 구조
 
-![System Architecture](images/dhash_architecture.png)
+![System Architecture](images/dhash_architecture.png)  
 *(D-HASH 전체 시스템 구조도)*
 
 ### 구성 요소
@@ -156,7 +156,7 @@ docker-compose logs -f runner
 | 문제 상황 | 원인 | 해결 방법 | 기술 블로그 |
 |:---:|:---|:---|:---:|
 | 해시 속도 저하 | Python 내장 함수의 성능 한계 | xxHash64 교체 및 `__slots__`로 메모리 최적화 | [🔗 Velog](https://velog.io/@bh1848/D-HASH-%ED%95%B4%EC%8B%9C-%EC%84%B1%EB%8A%A5-4%EB%B0%B0-%ED%96%A5%EC%83%81%EC%8B%9C%ED%82%A4%EA%B8%B0-xxHash%EC%99%80-slots) |
-| 초기 캐시 미스 | 승격 직후 대체 노드에 데이터 없음 | Guard Phase 도입: 승격 초반엔 쓰기 작업을 병행 | [🔗 Velog](#) |
+| 초기 캐시 미스 | 승격 직후 대체 노드에 데이터 없음 | Guard Phase 도입: 승격 초반엔 쓰기 작업을 병행 | [🔗 Velog](https://velog.io/@bh1848/D-HASH-Hot-key-%EC%8A%B9%EA%B2%A9-%EC%8B%9C-%EB%B0%9C%EC%83%9D%ED%95%98%EB%8A%94-Latency-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0-Guard-Phase) |
 | 데이터 불일치 | 여러 노드에 데이터가 흩어짐 | Write-Primary 정책: 쓰기는 무조건 메인 노드에서만 수행 | [🔗 Velog](#) |
 | 테스트 병목 | 동기 방식 요청의 대기 시간 | ThreadPoolExecutor를 써서 비동기 방식으로 부하 테스트 | [🔗 Velog](#) |
 
