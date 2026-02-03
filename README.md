@@ -1,72 +1,43 @@
 # D-HASH: Dynamic Hot-key Aware Scalable Hashing
 
-[![Paper](https://img.shields.io/badge/Paper-SCIE%20Accepted-blue)]()
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)]()
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)]()
+[![Paper](https://img.shields.io/badge/SCIE-Accepted-0066CC?style=flat-square&logo=googlescholar&logoColor=white)]()
+[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)]()
+[![Redis](https://img.shields.io/badge/Redis-Cluster-DC382D?style=flat-square&logo=redis&logoColor=white)]()
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 > **Official Implementation** of the paper *"D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems"*, accepted in **KSII Transactions on Internet and Information Systems (TIIS)**, 2026.
 >
-> *This repository is maintained by the **first author** of the paper.*
-
-> 💡 **Detailed Report:** Check out [**docs/REPORT_KR.md**](./docs/REPORT_KR.md) for troubleshooting logs, detailed architectural decisions, and full experimental records (in Korean).
+> **Author:** Hyeok Bang ([@bh1848](https://github.com/bh1848))
 
 <br>
 
-## 📌 Abstract
-This repository provides the **core implementation** of D-HASH, a novel hashing algorithm designed to solve the load imbalance problem caused by hot-keys in distributed cache systems.
+## 📌 Project Overview
+Hot-keys in distributed cache systems (e.g., Redis) cause severe **load imbalance**, leading to single-node bottlenecks.
+**D-HASH** introduces a **dynamic routing layer** on top of Consistent Hashing to detect and redistribute hot-key traffic in real-time.
 
-**Key Features:**
-- **Dynamic Detection:** Real-time identification of hot-keys based on access frequency using a client-side counter.
-- **Scalable Hashing:** Adaptive redistribution of hot-keys to minimize server overload without full data migration.
-- **High Performance:** Reduces load standard deviation (imbalance) by **up to 33.8%** in high-skew workloads compared to Consistent Hashing.
-
-<br>
-
-## 🔒 Scope of This Repository
-This repository focuses on the **core logic of the D-HASH algorithm** and a lightweight simulation framework for verification.
-
-Due to dataset licensing (NASA/eBay logs) and ongoing extensions of this work, the **raw datasets and full preprocessing pipelines are not publicly included**. However, the core algorithmic components (`algorithms.py`) and benchmark tools (`bench.py`) required to reproduce the results are fully provided.
+* **Problem:** Single node overload due to skewed traffic (Zipfian distribution).
+* **Solution:** Client-side hot-key detection & Window-based dynamic routing.
+* **Impact:** Reduced load standard deviation (imbalance) by **33.8%** compared to Consistent Hashing.
 
 <br>
 
-## 🏗️ System Architecture
-The overall architecture consists of a client-side agent for key monitoring and a hashing ring for data distribution.
+## 🏗️ Architecture
+The system consists of a **Smart Client** (monitoring & routing) and a **Hashing Ring**.
+When a hot-key is detected, requests are dynamically routed to an **Alternate Node** to offload the primary server.
 
 ![System Architecture](./docs/images/dhash_architecture.png)
-*(Note: D-HASH adds a dynamic routing layer on top of the standard Consistent Hashing ring.)*
 
 <br>
 
-## 📂 Project Structure
-~~~text
-D-HASH/
-├── src/
-│   └── dhash_experiments/
-│       ├── algorithms.py   # Core Algorithm (DHash class & Routing Logic)
-│       ├── bench.py        # Benchmark & Metrics Collection
-│       ├── cli.py          # Entry Point (Argument Parsing)
-│       ├── config.py       # Configuration & Hyperparameters
-│       ├── stages.py       # Experiment Stage Controller
-│       └── workloads.py    # Zipfian Workload Generator
-├── docs/                   # Experiment Reports & Figures
-├── results/                # Benchmark Results (CSV) & Metadata
-├── Dockerfile.runner       # Simulation Environment
-├── docker-compose.yml      # Orchestration (Redis Cluster + Runner)
-├── requirements.txt        # Python Dependencies
-└── README.md
-~~~
-
-<br>
-
-## 💻 Core Logic Preview
-D-HASH uses `__slots__` for memory optimization and isolates the routing logic for seamless integration.
+## 💻 Key Logic
+The implementation focuses on **memory efficiency** and **low latency**.
+We used `__slots__` to minimize memory footprint during high-concurrency simulations.
 
 ~~~python
 # src/dhash_experiments/algorithms.py
 
 class DHash:
-    # Memory optimization for high-concurrency simulation
+    # Memory optimization for large-scale simulation
     __slots__ = ("nodes", "T", "W", "reads", "alt", "ch")
 
     def get_node(self, key: Any, op: str = "read") -> str:
@@ -83,6 +54,7 @@ class DHash:
             self._ensure_alternate(key)
             delta = cnt - self.T
             epoch = (delta - self.W) // self.W
+            # Round-Robin between Primary and Alternate
             return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)
 
         return self._primary_safe(key)
@@ -90,45 +62,37 @@ class DHash:
 
 <br>
 
-## 🚀 How to Run
-You can run the simulation using Docker Compose to observe the load balancing effect.
-
-### 1. Prerequisites
-- **Docker** & **Docker Compose**
-- (Optional) Python 3.9+ (if running locally without Docker)
-
-### 2. Build & Run
-The default command runs the **full experiment suite** (Pipeline Sweep → Ablation → Zipf Benchmark) using synthetic data.
+## 🚀 Quick Start
+Reproduce the benchmark results using Docker Compose.
 
 ~~~bash
-# Clone this repository
+# 1. Clone Repository
 git clone https://github.com/bh1848/D-HASH.git
 cd D-HASH
 
-# Build and Start Simulation
+# 2. Run Simulation (Redis Cluster + Benchmark)
 docker-compose up --build
 
-# View Logs (Real-time output)
+# 3. Check Logs
 docker-compose logs -f runner
 ~~~
 
 <br>
 
-## 📊 Benchmark Result (Reproducible)
-
-This experiment uses a **Synthetic Zipfian Workload** ($\alpha=1.5$, High Skew) generated in real-time to ensure full reproducibility without external dataset dependencies.
+## 📊 Benchmark Results
+Experiments were conducted under a **High-Skew Zipfian Workload ($\alpha=1.5$)**.
 
 | Algorithm | Throughput (ops/s) | Load Std Dev (Lower is better) | Improvement |
 | :--- | :--- | :--- | :--- |
 | Consistent Hashing (CH) | 179,902 | 49,944 | - |
-| **D-HASH (Ours)** | **167,092** | **33,054** | **🔻 33.8%** |
+| **D-HASH (Ours)** | 167,092 | **33,054** | **🔻 33.8%** |
 
-> **Key Finding:** In high-skew environments ($\alpha=1.5$), D-HASH reduces load imbalance (Standard Deviation) by **33.8%** compared to CH, with only a marginal 7% trade-off in throughput, demonstrating the efficiency of our dynamic routing strategy.
+> **Result:** D-HASH significantly improves load balancing (**33.8% lower Std Dev**) with minimal throughput overhead (~7%).
 
 <br>
 
 ## 📝 Citation
-If you find this code useful for your research, please cite our paper:
+If you use this code for your research, please cite our paper:
 
 ~~~bibtex
 @article{bang2026dhash,
@@ -142,8 +106,5 @@ If you find this code useful for your research, please cite our paper:
 
 <br>
 
-## 👤 Author
-**Bang Hyeok**
-- Dept. of Information Security, The University of Suwon
-- GitHub: [@bh1848](https://github.com/bh1848)
-- Contact: [bh1848@naver.com](mailto:bh1848@naver.com)
+## 📧 Contact
+For any questions, please contact **Hyeok Bang** at [bh1848@naver.com](mailto:bh1848@naver.com).
