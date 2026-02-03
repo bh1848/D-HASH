@@ -52,7 +52,7 @@
 
 ## 2. 시스템 아키텍처
 
-![System Architecture](images/dhash_architecture.png)
+![System Architecture](images/dhash_architecture.png)  
 *(D-HASH 전체 시스템 구조도)*
 
 ### 구성 요소
