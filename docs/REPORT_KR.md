@@ -154,7 +154,7 @@ docker-compose logs -f runner
 
 | Issue | Cause | Solution | Tech Blog |
 |:---:|:---|:---|:---:|
-| **Hashing Overhead** | Python 내장 해시 함수의 속도 한계 | **xxHash64** 라이브러리 교체 및 `__slots__` 적용으로 메모리 최적화 | [🔗 Velog](#) |
+| **Hashing Overhead** | Python 내장 해시 함수의 속도 한계 | **xxHash64** 라이브러리 교체 및 `__slots__` 적용으로 메모리 최적화 | [🔗 Velog](https://velog.io/@bh1848/D-HASH-%ED%95%B4%EC%8B%9C-%EC%84%B1%EB%8A%A5-4%EB%B0%B0-%ED%96%A5%EC%83%81%EC%8B%9C%ED%82%A4%EA%B8%B0-xxHash%EC%99%80-slots) |
 | **Cold Start Spike** | Hot-key 승격 직후 Alternate Node에 데이터 부재 | **Guard Phase** 도입: 승격 초기에는 Write를 병행하여 Cache Warming 수행 | [🔗 Velog](#) |
 | **Write Consistency** | 분산된 노드 간 데이터 불일치 | **Write-Primary** 정책: 쓰기 작업은 항상 Primary Node에서 수행 | [🔗 Velog](#) |
 | **Test Accuracy** | 동기식(Sync) 요청에 의한 RTT 병목 | **ThreadPoolExecutor**를 활용한 비동기 부하 테스트 환경 구축 | [🔗 Velog](#) |
