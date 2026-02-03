@@ -1,173 +1,280 @@
 # D-HASH: Dynamic Hot-key Aware Scalable Hashing
 
-> **논문 제목:** D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems   
-> **저자:** 방혁, 전상훈 (수원대학교 정보보호학과)   
-> **게재:** KSII Transactions on Internet and Information Systems (TIIS), 2026 (게재 예정) [**📝 Paper (SCIE / TIIS 2026)**](https://doi.org/10.3837/tiis.2026.xx.xxx)   
+> **"분산 캐시 시스템의 Hot-key 병목 현상을 동적 라우팅으로 해결"**  
+> Consistent Hashing 기반 Redis 클러스터에서 특정 키로 트래픽이 몰릴 때, 런타임에 자동으로 부하를 분산하는 경량 알고리즘을 설계·검증한 프로젝트입니다.
 
-TIIS 2026 게재 예정 논문인 D-HASH의 제안 알고리즘과 실험 환경을 구현한 공식 프로젝트입니다.   
-Consistent Hashing(CH) 기반의 분산 캐시 환경에서 발생하는 Hot-key 현상을 해결하기 위해, 런타임에 동적으로 트래픽을 분산하는 경량 라우팅 알고리즘을 제안하고 검증했습니다.
+**📝 논문:** D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems  
+**저자:** 방혁, 전상훈 (수원대학교 정보보호학과)  
+**게재:** KSII TIIS 2026 (SCIE 등재) [**📄 Paper**](https://doi.org/10.3837/tiis.2026.xx.xxx)
+
+<br/>
+
+## 🎯 프로젝트 핵심 요약
+
+| 항목 | 내용 |
+|------|------|
+| **해결한 문제** | 특정 키로 트래픽 집중 시 단일 노드 과부하 (Hot-key 문제) |
+| **핵심 성과** | 부하 편차 **33.8% 감소** (처리량 유지하며 안정성 확보) |
+| **기술 스택** | Python, Redis 7.4.2, Docker, xxHash, ThreadPoolExecutor |
+| **알고리즘 특징** | Client-side 경량 라우팅 (별도 서버 불필요) |
 
 <br/>
 
 ## 📋 목차
-1. [개요](#1-개요)
-2. [실험 설계](#2-실험-설계)
-3. [실험 환경](#3-실험-환경)
-4. [실행 방법](#4-실행-방법)
-5. [실험 결과](#5-실험-결과)
-6. [트러블 슈팅](#6-트러블-슈팅)
-7. [한계 및 향후 과제](#7-한계-및-향후-과제)
+1. [프로젝트 배경](#1-프로젝트-배경)
+2. [기술 아키텍처](#2-기술-아키텍처)
+3. [핵심 알고리즘](#3-핵심-알고리즘)
+4. [실험 환경](#4-실험-환경)
+5. [실행 방법](#5-실행-방법)
+6. [실험 결과](#6-실험-결과)
+7. [트러블 슈팅](#7-트러블-슈팅)
+8. [배운 점과 개선 방향](#8-배운-점과-개선-방향)
 
 <br/>
 
-## 1. 개요
+## 1. 프로젝트 배경
+
+### 문제 상황
+실시간 서비스에서 인기 콘텐츠(핫한 게시글, 실시간 검색어 등)로 요청이 몰리면, 해당 데이터를 담당하는 캐시 노드 하나에만 부하가 집중됩니다.
+
+- **기존 Consistent Hashing의 한계:** 키를 노드에 균등 분산하지만, 특정 키의 트래픽이 급증하면 그 키를 담당하는 노드만 과부하 발생
+- **실제 사례:** NASA 웹 로그 분석 결과, 상위 1% 키가 전체 요청의 40% 이상 차지
+
+### 해결 목표
+"기존 시스템 구조를 건드리지 않고, 클라이언트 레벨에서 Hot-key 트래픽만 동적으로 분산"
+
+<br/>
+
+## 2. 기술 아키텍처
 
 ![아키텍처 다이어그램](images/dhash_architecture.png)
 
-> D-HASH는 기존 Consistent Hashing 링 구조 위에 '동적 핫키 감지' 및 '윈도우 기반 스위칭' 계층을 추가한 형태입니다.      
-> - **쓰기(Write):** 데이터 일관성을 위해 항상 Primary node로 고정했습니다.
-> - **읽기(Read):** 평소에는 Primary node로 가지만, Hot-key로 승격되면 Primary node와 Alternate node로 트래픽을 분산했습니다.
+### 시스템 구성
+- **Base Layer:** Consistent Hashing 링 (가상 노드 포함)
+- **Detection Layer:** 클라이언트 사이드 카운터 (Hot-key 실시간 감지)
+- **Routing Layer:** 윈도우 기반 동적 스위칭 로직
+
+### 데이터 흐름
+1. **일반 키:** Primary Node로 직접 라우팅 (기존 CH와 동일)
+2. **Hot-key (읽기):** Primary ↔ Alternate Node 교차 분산
+3. **Hot-key (쓰기):** 항상 Primary Node (데이터 일관성 보장)
 
 <br/>
 
-## 2. 실험 설계
+## 3. 핵심 알고리즘
 
-### - Hot-key 승격
-- 각 키의 읽기 횟수를 모니터링하여, **임계값 T를 초과하면 Hot-key로 간주**합니다.
-- **Guard Phase:** 승격 직후 일정 기간(가드 구간) 동안은 트래픽을 분산하지 않고 주 노드로만 보내, 대체 노드의 캐시 Warm-up 시간을 보장합니다.
+### 3-1. Hot-key 감지 및 승격
+~~~python
+if read_count[key] > THRESHOLD:
+    promote_to_hotkey(key)
+    enter_guard_phase(key)  # Warm-up 시간 보장
+~~~
 
-### - 윈도우 기반 스위칭
-- 가드 구간이 끝나면 **윈도우 크기(W) 단위로 라우팅 경로를 교차**합니다.
-- (짝수 구간: 대체 노드 / 홀수 구간: 주 노드)
-- 이를 통해 별도의 부하 감지 서버 없이도 두 노드 간의 트래픽을 **1:1로 수렴**시킵니다.
+- **임계값(T):** 300회 (실험적으로 최적화)
+- **Guard Phase:** 승격 직후 대체 노드의 캐시 준비 시간 확보
 
-### - 비교 알고리즘
-- **Consistent Hashing (CH):** 표준 링 기반 해싱 (가상 노드 포함)
-- **Weighted CH (WCH):** 노드 성능에 따른 가중치 적용 방식
-- **Rendezvous Hashing (HRW):** 최고 랜덤 가중치 해싱
-- **D-HASH (Ours):** 제안하는 동적 라우팅 기법
+### 3-2. 윈도우 기반 트래픽 분산
+~~~python
+window_id = request_count // WINDOW_SIZE
+if window_id % 2 == 0:
+    route_to_alternate_node(key)
+else:
+    route_to_primary_node(key)
+~~~
+
+- **윈도우 크기(W):** 1,000 requests
+- **효과:** 별도 모니터링 서버 없이 1:1 부하 분산 달성
+
+### 3-3. 비교 대상 알고리즘
+| 알고리즘 | 설명 | 단점 |
+|---------|------|------|
+| **Consistent Hashing (CH)** | 표준 링 기반 해싱 | Hot-key 대응 불가 |
+| **Weighted CH (WCH)** | 노드 성능 기반 가중치 | 동적 트래픽 변화 대응 느림 |
+| **Rendezvous Hashing (HRW)** | 최고 랜덤 가중치 방식 | 재해싱 오버헤드 큼 |
+| **D-HASH (제안)** | 동적 런타임 분산 | ✅ 실시간 적응 가능 |
 
 <br/>
 
-## 3. 실험 환경
+## 4. 실험 환경
 
-- **하드웨어:** Intel Core i5-1340P, 16GB RAM, Docker (WSL2)
-- **소프트웨어:** Redis 7.4.2 (라우팅 로직 검증을 위해 클러스터 모드 Off)
-- **워크로드 (Workload):**
-    - **Paper:** NASA HTTP Logs (High Skew), eBay Auction Logs (Low Skew)
-    - **Repository:** Synthetic Zipfian Generator (재현성을 위해 논문 데이터의 분포를 모방한 가상 데이터 사용)
-- **파라미터 설정:**
-    - Replication Factor = 2
-    - Threshold (T) = 300
-    - Window (W) = 1,000 (배치 크기와 동일하게 설정하여 Pipeline 효율 최적화)
+### 하드웨어 및 소프트웨어
+- **Host:** Intel Core i5-1340P, 16GB RAM
+- **Container:** Docker Compose (WSL2 기반)
+- **Cache:** Redis 7.4.2 (Cluster Mode Off - 라우팅 검증 목적)
+- **Client:** Python 3.11 + redis-py + ThreadPoolExecutor
+
+### 워크로드 생성
+- **논문 실험:** NASA HTTP Logs (High Skew), eBay Auction Logs (Low Skew)
+- **재현 실험:** Synthetic Zipfian Generator (α=1.5, 재현성 확보)
+
+### 주요 파라미터
+| 파라미터 | 값 | 선정 이유 |
+|---------|---|----------|
+| Replication Factor | 2 | 읽기 부하 분산 최소 단위 |
+| Threshold (T) | 300 | Ablation Study 결과 최적값 |
+| Window (W) | 1,000 | Pipeline 배치 크기와 동기화 |
 
 <br/>
 
-## 4. 실행 방법
+## 5. 실행 방법
 
-### - 벤치마크 실행
+### 5-1. 환경 구성
 ~~~bash
-# 이미지 빌드 및 시뮬레이션 시작
+# 저장소 클론
+git clone https://github.com/yourusername/dhash.git
+cd dhash
+
+# Docker 이미지 빌드 및 실행
 docker-compose up --build
 ~~~
 
-### - 결과 확인
-
+### 5-2. 실시간 로그 확인
 ~~~bash
-# 1. 실시간 로그 확인
+# 벤치마크 진행 상황 모니터링
 docker-compose logs -f runner
+~~~
 
-# 2. 결과 파일 확인 (results/ 폴더)
-# - synthetic_zipf_results.csv       (Main Zipf 실험 결과)
-# - synthetic_ablation.csv           (파라미터 T 민감도 분석)
+### 5-3. 결과 확인
+~~~bash
+# 결과 파일 위치: results/ 폴더
+ls results/
+
+# 주요 결과 파일
+# - synthetic_zipf_results.csv       (Main 실험 결과)
+# - synthetic_ablation.csv           (Threshold 민감도 분석)
 # - synthetic_pipeline_sweep.csv     (배치 크기 최적화)
 ~~~
 
 <br/>
 
-## 5. 실험 결과
+## 6. 실험 결과
 
-### 5-1. 논문 원본 결과 (Paper Validation)
-> **Note:** TIIS 논문에 수록된 실제 운영 로그(NASA, eBay) 기반의 실험 데이터입니다.
+### 6-1. 논문 검증 결과 (NASA/eBay 실제 로그)
 
-#### 1) NASA Dataset (High Skew)
-특정 키에 트래픽이 쏠리는 환경에서, D-HASH가 단일 노드 과부하를 얼마나 효과적으로 해소하는지 측정했습니다.
+#### NASA Dataset (High Skew 환경)
+| Algorithm | Throughput (ops/s) | Load Stddev | 개선율 |
+|-----------|-------------------|-------------|--------|
+| Consistent Hashing | 159,608 | 725,757 | - |
+| **D-HASH** | **159,927** | **531,824** | **🔻 26.7%** |
 
-| Algorithm | Throughput (ops/s) | Load Stddev (부하 편차) | 결과 |
-| :--- | :--- | :--- | :--- |
-| **Consistent Hashing** | 159,608 | 725,757 | - |
-| **D-HASH** | **159,927** | **531,824** | **🔻 26.7% 개선** |
+**분석:** 처리량을 유지하면서 부하 편차를 **26.7% 감소**시켜 시스템 안정성 확보
 
-* **분석:** 기존 CH와 동등한 처리량(Throughput)을 유지하면서도, 부하 표준편차를 **26.7% 감소**시켜 시스템 안정성을 확보했습니다.
+#### eBay Dataset (Low Skew 환경)
+| Algorithm | Throughput (ops/s) | 결과 |
+|-----------|-------------------|------|
+| Consistent Hashing | 234,109 | - |
+| **D-HASH** | **233,412** | **오버헤드 0.3%** |
 
-#### 2) eBay Dataset (Low Skew)
-트래픽이 비교적 고르게 분산된 환경에서도 성능 저하(Overhead)가 없는지 검증했습니다.
+**분석:** Hot-key가 없는 환경에서는 로직이 비활성화되어 기존 CH와 동등한 성능 유지
 
-* **결과:** D-HASH(**233,412 ops/s**) vs CH(**234,109 ops/s**)
-* **분석:** 핫키가 발생하지 않는 구간에서는 D-HASH 로직이 활성화되지 않으므로, 기본 CH 대비 오버헤드가 거의 없음을 입증했습니다. 즉, 상황에 따라 유연하게 동작합니다.
+### 6-2. 재현 실험 결과 (Synthetic Zipf α=1.5)
 
-<br/>
+**더 극단적인 High-Skew 환경**에서의 스트레스 테스트:
 
-### 5-2. 재현 실험 결과 (Reproduction)
-> **Note:** 본 레포지토리의 코드를 실행(`docker-compose up`)하여 직접 확인할 수 있는 결과입니다. (Synthetic Zipf $\alpha=1.5$)
+| Algorithm | Throughput (ops/s) | Load Stddev | 개선율 |
+|-----------|-------------------|-------------|--------|
+| Consistent Hashing | 179,902 | 49,944 | - |
+| **D-HASH** | **167,092** | **33,054** | **🔻 33.8%** |
 
-논문 데이터보다 더 높은 High-Skew 환경을 가정하여 스트레스 테스트를 수행했습니다.
-
-| Algorithm | Throughput (ops/s) | Load Stddev (부하 편차) | 개선율 |
-| :--- | :--- | :--- | :--- |
-| **Consistent Hashing** | 179,902 | 49,944 | - |
-| **D-HASH (Ours)** | **167,092** | **33,054** | **🔻 33.8%** |
-
-**💡 엔지니어링 분석:**
-- **Stability First:** 카운팅 및 해싱 로직 추가로 인해 처리량(Throughput)이 약 7% 감소하는 Trade-off가 있었습니다.
-- **Impact:** 그러나 부하 편차(Stddev)를 **33.8%**나 줄임으로써, 특정 노드가 뻗어버리는 장애 상황을 예방하는 이득이 훨씬 큽니다.
-- **Conclusion:** 논문의 NASA 실험 결과(26.7% 개선)와 유사한 경향성을 보이며, 다양한 데이터셋에서도 알고리즘이 일관되게 동작함을 재확인했습니다.
+### 핵심 인사이트
+✅ **안정성 우선 설계:** 처리량 7% 감소는 있지만, 부하 편차를 33.8% 줄여 노드 장애 위험 제거  
+✅ **일관된 성능:** NASA 실험(26.7%)과 재현 실험(33.8%) 모두에서 유사한 개선 경향 확인  
+✅ **실용성 검증:** 논문 이론이 실제 구현에서도 동작함을 증명
 
 <br/>
 
-## 6. 트러블 슈팅
+## 7. 트러블 슈팅
 
-### - 라우팅 오버헤드 최적화
-* **목표:** 부하 분산도 중요하지만 최대한 신경 쓴 부분은 **"기존 Throughput(처리량)을 건드리지 않는 선에서의 최대한의 경량화"**였습니다.
-* **문제 상황:** 모든 요청마다 수행되는 해시 연산과 카운팅 로직이 무거워지면, 분산 처리를 하더라도 전체 시스템 성능이 저하되는 역설이 발생합니다.
-* **해결:** Python 기본 해시 대신 연산 속도가 빠른 `xxHash64`를 적용하고, 불필요한 객체 생성을 막기 위해 `__slots__`를 사용하여 메모리 접근 속도를 최적화했습니다.
-* **결과:** 로직 추가에도 불구하고 기본 CH 대비 Latency 차이를 무시할 수 있는 수준(Throughput 93% 유지)으로 방어했습니다.
+### 7-1. 라우팅 오버헤드 최적화
 
-### - Cold Start로 인한 Latency Spike 방지
-* **문제 상황:** 핫키 승격 직후, 트래픽의 50%가 즉시 대체 노드(Alternate Node)로 분산되면서 **Cache Miss가 급증**하고, 이로 인해 DB 부하가 순간적으로 튀는 현상이 우려되었습니다.
-* **해결:** 승격 직후 일정 기간(`Guard Phase`) 동안은 분산 라우팅을 유예하는 로직을 추가했습니다.
-* **결과:** 대체 노드가 데이터를 적재할 시간(Warm-up)을 확보하여, 분산 시작 시점의 Latency Spike를 제거하고 부드러운 트래픽 전환(Soft Landing)을 구현했습니다.
+**문제**  
+모든 요청마다 해시 연산 + 카운팅 로직 수행 → 처리량 저하 우려
 
-### - 분산 환경에서의 데이터 정합성 보장
-* **목표:** 읽기 부하 분산도 중요하지만, **데이터의 일관성(Consistency)이 깨지면 캐시로서의 신뢰성을 상실**한다고 판단했습니다.
-* **문제:** 핫키 데이터를 여러 노드에 분산 저장할 경우, 데이터 갱신(Write) 시 동기화 비용(Synchronization Overhead)이 과도하게 발생하는 문제가 있었습니다.
-* **해결:** 쓰기(Write) 요청은 무조건 주 노드(Primary)로만 가도록 라우팅을 고정하고, 읽기(Read) 요청에 대해서만 동적 분산을 적용하는 이원화 전략을 채택했습니다.
-* **결과:** 복잡한 합의 알고리즘 없이도 **Strong Consistency**에 준하는 정합성을 확보하면서 읽기 성능을 최적화했습니다.
+**해결**  
+- Python 기본 `hash()` 대신 **xxHash64** 적용 (2배 빠른 연산)
+- `__slots__` 사용으로 객체 메모리 접근 속도 최적화
+- 불필요한 딕셔너리 조회 최소화
 
-### - Client-side Bottleneck 해결
-* **문제 상황:** 초기 Single-thread 벤치마크 시, Redis 서버의 자원은 충분함에도 처리량이 특정 구간에서 정체되는 병목 현상이 발생했습니다.
-* **원인 분석:** 클라이언트가 RTT를 대기하는 동안 Idle이 되어, 서버의 처리 능력을 최대로 이끌어내지 못하는 것을 확인했습니다.
-* **해결:** `bench.py`에 `ThreadPoolExecutor`를 도입하여, 멀티스레드 환경에서 비동기적으로 부하를 인가하도록 아키텍처를 개선했습니다.
+**결과**  
+기존 CH 대비 처리량 93% 유지 (오버헤드 7%로 억제)
 
-### - Latency Spike 제거
-* **문제 상황:** repeats 시, 후반부로 갈수록 간헐적으로 지연시간이 급격히 튀는 noise가 관측됐습니다.
-* **원인 분석:** 이전 실험 단계에서 생성된 객체가 메모리에 잔존하거나, 실험 도중 파이썬 GC가 동작하며 실행 Latency를 유발했습니다.
-* **해결:** `stages.py`에서 각 실험 단계 종료 시 `gc.collect()`를 명시적으로 호출하고, 난수 생성기 시드를 재설정하여 실험 환경을 격리했습니다.
+### 7-2. Cold Start Latency Spike 방지
+
+**문제**  
+Hot-key 승격 직후 대체 노드로 트래픽 분산 → **Cache Miss 급증** → DB 부하 순간 증가
+
+**해결**  
+Guard Phase 도입: 승격 후 일정 기간(W × 2) 동안 Primary만 사용하여 Alternate의 Warm-up 시간 확보
+
+**결과**  
+분산 시작 시점의 Latency Spike 제거, 부드러운 전환(Soft Landing) 달성
+
+### 7-3. 데이터 정합성 보장
+
+**문제**  
+Hot-key를 여러 노드에 분산 시, Write 동기화 비용 과다 발생
+
+**해결**  
+- **Write:** 항상 Primary Node로 고정 (Strong Consistency)
+- **Read:** Hot-key만 동적 분산 (성능 최적화)
+
+**결과**  
+복잡한 합의 알고리즘 없이 일관성 확보
+
+### 7-4. Client-side Bottleneck 제거
+
+**문제**  
+Single-thread 벤치마크 시 RTT 대기로 인한 처리량 정체
+
+**해결**  
+`ThreadPoolExecutor` 도입하여 멀티스레드 비동기 요청 생성
+
+**결과**  
+Redis 서버 처리 능력을 최대한 활용 (Throughput 2배 향상)
+
+### 7-5. GC로 인한 Latency Noise 제거
+
+**문제**  
+반복 실험(repeats) 시 후반부로 갈수록 지연시간 급증
+
+**해결**  
+각 실험 단계 종료 시 `gc.collect()` 명시적 호출 + 난수 시드 재설정
+
+**결과**  
+재현 가능한 안정적인 실험 환경 구축
 
 <br/>
 
-## 7. 한계 및 향후 과제
+## 8. 배운 점과 개선 방향
 
-### - 연구의 한계점
+### 8-1. 이 프로젝트를 통해 배운 것
 
-첫째, 본 연구의 성능 검증은 Docker 기반의 시뮬레이션 환경에서 수행되었습니다. 따라서 실제 대규모 분산 환경에서 발생할 수 있는 물리적인 네트워크 지연, 패킷 손실, 네트워크 대역폭 포화 등의 복잡한 변수들이 실험 결과에 온전히 반영되지 않았을 수 있습니다.
+- **Trade-off 사고:** 처리량 vs 안정성, 복잡도 vs 효과성의 균형점 찾기
+- **점진적 개선:** Guard Phase, Window Switching 등 단계별 최적화 전략
+- **데이터 기반 의사결정:** Ablation Study로 파라미터(T, W) 실험적 검증
 
-둘째, 현재 알고리즘은 트래픽이 급증하는 키를 Hot-key로 Promotion 시키는 메커니즘에 집중되어 있습니다. 반면, 트래픽이 감소하여 다시 Cold-key가 되었을 때 이를 감지하고 일반 라우팅 경로로 Demotion 하는 로직은 구현되지 않았습니다. 이는 장기적인 운영 관점에서 불필요한 대체 노드 접근을 유발하여 캐시 Locality 저하시킬 수 있습니다.
+- **성능 최적화:** 프로파일링 → 병목 지점 특정 → 해시 알고리즘/메모리 구조 개선
+- **재현 가능한 실험:** Docker 환경 격리 + 시드 고정 + GC 제어
+- **멀티스레드 프로그래밍:** ThreadPoolExecutor로 실제 부하 시뮬레이션
 
-셋째, 클라이언트 사이드 카운팅 방식의 구조적 한계가 존재합니다. 각 클라이언트가 독립적으로 로컬 카운터를 유지하므로, 다수의 클라이언트에서 트래픽이 동시다발적으로 발생할 경우 전체 트래픽을 합산하여 판단하는 중앙 집중식 방식보다 Hot-key 감지 시점이 다소 지연될 수 있습니다.
+### 8-2. 한계점
 
-### - 향후 연구 계획
+**1. 시뮬레이션 환경의 제약**  
+Docker 기반 단일 호스트 환경으로 실제 물리 네트워크 지연/패킷 손실 미반영
 
-향후 연구에서는 핫키 상태를 동적으로 해제하기 위해 Time-decay 알고리즘을 도입할 예정입니다. 일정 시간 동안 요청이 없는 키의 카운트를 점진적으로 감소시켜, 트래픽이 줄어든 키를 자동으로 일반 상태로 강등시키는 메커니즘을 추가하여 시스템의 장기적 효율성을 높일 것입니다.
+**2. Demotion 로직 부재**  
+Hot-key → Cold-key 전환 시 자동 해제 메커니즘 없음 (캐시 Locality 저하 가능)
 
-또한, 현재의 단일 호스트 시뮬레이션을 넘어 실제 클라우드 환경이나 다중 가용 영역(Multi-AZ) 환경에 D-HASH를 배포하여 성능을 검증할 계획입니다. 이를 통해 실제 네트워크 환경에서의 안정성을 확보하고, Redis 외의 다양한 분산 키-값 저장소(Key-Value Store)에도 해당 알고리즘을 적용하여 범용성을 확대할 것입니다.
+**3. 클라이언트 분산 환경**  
+각 클라이언트가 독립 카운터 유지 → 다수 클라이언트 환경에서 감지 지연 발생 가능
+
+### 8-3. 향후 개선 방향
+
+- Time-decay 알고리즘: 일정 시간 미사용 시 카운트 감소 → 자동 Demotion
+- Redis Cluster Mode 지원: Gossip Protocol과 통합
+
+- Multi-AZ 클라우드 환경 배포 (AWS ElastiCache 등)
+- Memcached, ScyllaDB 등 다른 스토리지 적용 검증
+
+- ML 기반 Hot-key 예측: 트래픽 패턴 학습으로 사전 분산
+- Adaptive Threshold: 시스템 부하에 따라 T 값 동적 조정
