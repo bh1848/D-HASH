@@ -9,7 +9,7 @@
 >
 > **Author:** Hyeok Bang ([@bh1848](https://github.com/bh1848))
 
-> 💡 **For Korean Visitors:** 실험 과정과 상세 분석은 [**기술 분석 및 실험 기록**](./docs/REPORT_KR.md)에서 확인하실 수 있습니다.    
+> 💡 **For Korean Visitors:** 실험 과정과 상세 분석은 [REPORT_KR.md](./docs/REPORT_KR.md)에서 확인하실 수 있습니다.    
 <br>
 
 ## 📌 Project Overview
