@@ -17,17 +17,6 @@
 
 <br>
 
-## 🎯 프로젝트 요약
-
-| 구분 | 내용 |
-|:---:|:---|
-| 문제점 | 특정 키(Hot-key)에 요청이 몰릴 때 발생하는 단일 노드 과부하 현상 |
-| 해결책 | 별도 서버 없이 클라이언트에서 처리하는 윈도우 기반 동적 라우팅 |
-| 성과 | 기존 방식 대비 부하 편차(표준편차) 33.8% 감소 |
-| 스택 | Python 3.11, Redis, Consistent Hashing |
-
-<br>
-
 ## 📋 목차
 1. [프로젝트 소개](#1-프로젝트-소개)
 2. [시스템 구조](#2-시스템-구조)
@@ -155,10 +144,10 @@ docker-compose logs -f runner
 
 | 문제 상황 | 원인 | 해결 방법 | 기술 블로그 |
 |:---:|:---|:---|:---:|
-| 해시 속도 저하 | Python 내장 함수의 성능 한계 | xxHash64 교체 및 `__slots__`로 메모리 최적화 | [🔗 Velog](https://velog.io/@bh1848/D-HASH-%ED%95%B4%EC%8B%9C-%EC%84%B1%EB%8A%A5-4%EB%B0%B0-%ED%96%A5%EC%83%81%EC%8B%9C%ED%82%A4%EA%B8%B0-xxHash%EC%99%80-slots) |
-| 초기 캐시 미스 | 승격 직후 대체 노드에 데이터 없음 | Guard Phase 도입: 승격 초반엔 쓰기 작업을 병행 | [🔗 Velog](https://velog.io/@bh1848/D-HASH-Hot-key-%EC%8A%B9%EA%B2%A9-%EC%8B%9C-%EB%B0%9C%EC%83%9D%ED%95%98%EB%8A%94-Latency-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0-Guard-Phase) |
-| 데이터 불일치 | 여러 노드에 데이터가 흩어짐 | Write-Primary 정책: 쓰기는 무조건 메인 노드에서만 수행 | [🔗 Velog](#) |
-| 테스트 병목 | 동기 방식 요청의 대기 시간 | ThreadPoolExecutor를 써서 비동기 방식으로 부하 테스트 | [🔗 Velog](#) |
+| **해시 속도 저하** | Python 내장 함수의 성능 한계 | xxHash64 교체 및 __slots__ 메모리 최적화 | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-python-hash-optimization/) |
+| **초기 캐시 미스** | 승격 직후 대체 노드 부재 | Guard Phase 도입 및 쓰기 병행 예열 | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Hot-key-Promotion-Latency-Guard-Phase/) |
+| **데이터 불일치** | 분산 노드 간 데이터 파편화 | Write-Primary 정책으로 쓰기 경로 단일화 | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Write-Primary-Routing-Strategy/) |
+| **테스트 병목** | 동기 I/O 요청 대기 시간 | ThreadPoolExecutor 비동기 부하 테스트 전환 | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Asynchronous-Test-Environment/) |
 
 <br>
 
