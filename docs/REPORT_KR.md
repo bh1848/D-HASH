@@ -142,12 +142,12 @@ docker-compose logs -f runner
 
 ## 7. 트러블 슈팅
 
-| 문제 상황 | 원인 | 해결 방법 | 기술 블로그 |
-|:---:|:---|:---|:---:|
-| **해시 속도 저하** | Python 내장 함수의 성능 한계 | xxHash64 교체 및 __slots__ 메모리 최적화 | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-python-hash-optimization/) |
-| **초기 캐시 미스** | 승격 직후 대체 노드 부재 | Guard Phase 도입 및 쓰기 병행 예열 | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Hot-key-Promotion-Latency-Guard-Phase/) |
-| **데이터 불일치** | 분산 노드 간 데이터 파편화 | Write-Primary 정책으로 쓰기 경로 단일화 | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Write-Primary-Routing-Strategy/) |
-| **테스트 병목** | 동기 I/O 요청 대기 시간 | ThreadPoolExecutor 비동기 부하 테스트 전환 | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Asynchronous-Test-Environment/) |
+| 문제 상황 및 원인 | 해결 방안 | 성과 | 상세 |
+| :--- | :--- | :--- | :--- |
+| Python 내장 해시 함수의 성능 한계로 인한 처리 속도 저하 및 메모리 오버헤드 | `xxHash64` 알고리즘 교체 및 `__slots__` 활용으로 객체 구조 최적화 | **해싱 연산 속도 및 메모리 효율성 대폭 향상** | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-python-xxhash/) |
+| Hot-key 승격 직후 데이터 부재로 인해 일시적으로 발생하는 초기 캐시 미스 | Guard Phase 도입 및 쓰기 병행 예열(Pre-warming) 로직 설계 | **승격 시점의 Latency Spike 제거 및 서비스 안정성 확보** | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Hot-key-Promotion-Latency-Guard-Phase/) |
+| 분산 노드 간 데이터 파편화로 인해 발생하는 읽기/쓰기 정합성 불일치 | Write-Primary 정책을 통한 쓰기 경로 단일화 및 라우팅 구조 개선 | **분산 환경 내 데이터 무결성 및 완벽한 정합성 보장** | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Write-Primary-Routing-Strategy/) |
+| 동기 I/O 요청 대기로 인해 부하 테스트 시 발생하는 측정 지연 및 정밀도 저하 | `ThreadPoolExecutor` 기반 비동기 부하 테스트 환경으로 시스템 전환 | **실제 운영 환경에 근접한 고정밀 벤치마크 지표 확보** | [🔗 Link](https://bh1848.github.io/hzeror/D-HASH-Asynchronous-Test-Environment/) |
 
 <br>
 
