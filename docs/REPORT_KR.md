@@ -147,23 +147,23 @@ docker-compose logs -f runner
 
 - **Situation**: 대규모 분산 시뮬레이션 시 MD5의 높은 연산 비용으로 처리량이 급감하고, Python 객체 오버헤드로 인해 메모리 점유율이 한계에 도달.
 - **Task**: 수백만 개의 키와 노드를 수용할 수 있도록 시뮬레이터의 연산 속도 및 메모리 효율 최적화.
-- **Action**: 암호학적 해시인 MD5를 비암호화 고속 해시인 **xxHash64**로 대체하고, Python 클래스에 **`__slots__`**를 적용하여 동적 딕셔너리 생성을 차단.
-- **Result**: 해싱 연산 속도 **20배 향상** 및 객체당 메모리 사용량 **50% 절감**을 통해 대규모 시나리오 테스트 가능 환경 확보.
+- **Action**: 암호학적 해시인 MD5를 비암호화 고속 해시인 xxHash64로 대체하고, Python 클래스에 `__slots__`를 적용하여 동적 딕셔너리 생성을 차단.
+- **Result**: 해싱 연산 속도 20배 향상 및 객체당 메모리 사용량 50% 절감을 통해 대규모 시나리오 테스트 가능 환경 확보.
 
 ### 2. Hot-key 승격 시점의 Latency Spike 억제 (Guard Phase)
 [👉 포스트 보러가기](https://bh1848.github.io/hzeror/D-HASH-guard-phase/)
 
 - **Situation**: 특정 키가 Hot-key로 승격되어 대체 노드(Alternate Node)로 트래픽이 전환되는 순간, 캐시가 비어있는 'Cold Start' 상태로 인해 응답 지연(Latency Spike) 발생.
 - **Task**: 동적 라우팅 전환 시점의 캐시 미스를 방지하고 부하 분산의 안정성 확보.
-- **Action**: 승격 직후 일정 기간 트래픽을 유지하는 **Guard Phase**와, 쓰기 요청을 대체 노드에도 비동기로 복제하는 **Pre-warming(이중 쓰기)** 전략 설계.
-- **Result**: 승격 구간의 급격한 성능 저하를 차단하고, Zipfian 워크로드 환경에서 부하 표준편차를 최대 **33.8%** 개선.
+- **Action**: 승격 직후 일정 기간 트래픽을 유지하는 Guard Phase와, 쓰기 요청을 대체 노드에도 비동기로 복제하는 Pre-warming(이중 쓰기) 전략 설계.
+- **Result**: 승격 구간의 급격한 성능 저하를 차단하고, Zipfian 워크로드 환경에서 부하 표준편차를 최대 33.8% 개선.
 
 ### 3. 분산 캐시 정합성 유지를 위한 Write-Primary 라우팅 설계
 [👉 포스트 보러가기](https://bh1848.github.io/hzeror/D-HASH-routing-strategy/)
 
 - **Situation**: 읽기 트래픽 분산을 위한 동적 라우팅 규칙을 쓰기 요청에도 동일하게 적용할 경우, 노드 간 데이터 파편화(Fragmentation) 및 정합성 불일치 위협 확인.
 - **Task**: 동적 로드 밸런싱 환경에서도 데이터의 무결성(Consistency)을 완벽하게 보장하는 아키텍처 수립.
-- **Action**: 읽기 요청은 부하에 따라 경로를 분기하되, 쓰기 요청은 불변의 해시 링이 지정한 주 노드(p(k))로만 고정하는 **Write-Primary** 패턴 도입.
+- **Action**: 읽기 요청은 부하에 따라 경로를 분기하되, 쓰기 요청은 불변의 해시 링이 지정한 주 노드(p(k))로만 고정하는 Write-Primary 패턴 도입.
 - **Result**: 복잡한 분산 락(Distributed Lock) 없이도 데이터 파편화 0%를 달성하며 시스템의 복잡도와 정합성 문제를 동시에 해결.
 
 ### 4. 클라이언트 병목 해소를 위한 비동기 벤치마크 환경 구축
@@ -172,7 +172,7 @@ docker-compose logs -f runner
 - **Situation**: 동기식(Blocking I/O) 부하 테스트 수행 중, 서버 자원은 충분함에도 클라이언트의 네트워크 대기 시간(RTT)으로 인해 처리량(Throughput)이 정체되는 병목 현상 발생.
 - **Task**: 네트워크 지연을 배제하고 서버의 순수 최대 처리량(OPS)을 검증할 수 있는 논블로킹 테스트 환경 구축.
 - **Action**: Python `ThreadPoolExecutor`를 도입하여 요청을 병렬화하고, 노드별 버킷팅(Bucketing)을 통해 락 경합을 최소화한 비동기 벤치마크 툴 개발.
-- **Result**: 기존 대비 압도적인 **180,000 OPS**를 달성하여 실제 운영 환경 수준의 성능을 검증하고, Tail Latency(P99) 측정의 정밀도 확보.
+- **Result**: 기존 대비 압도적인 180,000 OPS를 달성하여 실제 운영 환경 수준의 성능을 검증하고, Tail Latency(P99) 측정의 정밀도 확보.
 
 <br>
 
