@@ -140,9 +140,7 @@ docker-compose logs -f runner
 
 <br>
 
-<div id="troubleshooting"></div>
-
-## 7. 트러블 슈팅
+## <a name="troubleshooting"></a>7. 트러블 슈팅
 
 ### 1. xxHash64와 \_\_slots\_\_를 활용한 시뮬레이션 성능 최적화
 [👉 포스트 보러가기](https://bh1848.github.io/hzeror/D-HASH-xxhash/)
