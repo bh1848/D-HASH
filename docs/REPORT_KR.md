@@ -143,32 +143,28 @@ docker-compose logs -f runner
 ## 7. 트러블 슈팅
 
 ### 1. xxHash64와 `__slots__`를 활용한 성능 최적화
-[👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-xxhash/)
-
 - **문제**: 대규모 시뮬레이션 시 MD5 해싱 연산의 높은 비용으로 처리량이 급감하고, Python 객체 오버헤드로 인해 메모리 부족 발생
 - **해결**: 암호학적 해시인 MD5를 고속 비암호화 해시인 `xxHash64`로 교체하고, 클래스에 `__slots__`를 적용해 객체당 메모리 사용량 최적화
-- **결과**: **해싱 속도 20배 향상 및 메모리 50% 절감**을 통해 대규모 시나리오 테스트가 가능한 환경 구축
+- **결과**: **해싱 속도 20배 향상 및 메모리 50% 절감**을 통해 대규모 시나리오 테스트가 가능한 환경 구축  
+- [👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-xxhash/)
 
 ### 2. Hot-key 승격 시 Latency Spike 방어 (Guard Phase)
-[👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-guard-phase/)
-
 - **문제**: 특정 키가 Hot-key로 판단되어 노드가 전환되는 순간, 대상 노드에 데이터가 없는 'Cold Start' 상태로 인해 응답 지연 발생
 - **해결**: 노드 전환 전 일정 시간 요청을 유지하며 데이터를 채워주는 **Guard Phase**와 비동기 이중 쓰기(Pre-warming) 전략 도입
 - **결과**: 전환 구간의 성능 저하를 방지하고, Zipfian 분포 기반 테스트 환경에서 **부하 불균형 33.8% 개선**
+- [👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-guard-phase/)
 
 ### 3. 데이터 정합성 보장을 위한 Write-Primary 구조 설계
-[👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-routing-strategy/)
-
 - **문제**: 읽기 트래픽 분산 로직을 쓰기 요청에 동일하게 적용할 경우, 여러 노드에 데이터가 흩어져 정합성이 깨지는 이슈 확인
 - **해결**: 읽기는 분산하되 쓰기는 해시 링이 지정한 주 노드(Primary)에만 고정하는 **Write-Primary** 패턴 적용
 - **결과**: 복잡한 분산 락(Distributed Lock) 없이 **데이터 파편화 0%** 달성 및 시스템 복잡도 해결
+- [👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-routing-strategy/)
 
 ### 4. ThreadPoolExecutor를 이용한 비동기 벤치마크 툴 개발
-[👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-threadpoolexecutor/)
-
 - **문제**: 동기 방식(Blocking I/O) 테스트 시 클라이언트의 네트워크 대기 시간 때문에 서버의 최대 처리량(Throughput) 측정 불가
 - **해결**: `ThreadPoolExecutor`를 활용해 요청을 병렬화하고, 노드별 버킷팅으로 락 경합을 최소화한 비동기 테스트 환경 구축
 - **결과**: **180,000 OPS급 고부하 환경**을 구현하여 실제 운영 수준의 성능 검증 및 P99 지연 시간 측정의 정밀도 확보
+- [👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-threadpoolexecutor/)
 
 <br/>
 
