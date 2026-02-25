@@ -143,7 +143,7 @@ docker-compose logs -f runner
 ## 7. 트러블 슈팅
 
 ### 1. xxHash64와 __slots__를 통한 Python 성능 최적화
-[👉 포스트 보러가기](https://bh1848.github.io/hzeror/D-HASH-xxhash/)
+[👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-xxhash/)
 
 - **Situation**: 대규모 분산 시뮬레이션 시 MD5의 높은 연산 비용으로 처리량이 급감하고, Python 객체 오버헤드로 인해 메모리 점유율이 한계에 도달.
 - **Task**: 수백만 개의 키와 노드를 수용할 수 있도록 시뮬레이터의 연산 속도 및 메모리 효율 최적화.
@@ -151,7 +151,7 @@ docker-compose logs -f runner
 - **Result**: 해싱 연산 속도 20배 향상 및 객체당 메모리 사용량 50% 절감을 통해 대규모 시나리오 테스트 가능 환경 확보.
 
 ### 2. Hot-key 승격 지연을 위한 Guard Phase 설계
-[👉 포스트 보러가기](https://bh1848.github.io/hzeror/D-HASH-guard-phase/)
+[👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-guard-phase/)
 
 - **Situation**: 특정 키가 Hot-key로 승격되어 대체 노드(Alternate Node)로 트래픽이 전환되는 순간, 캐시가 비어있는 'Cold Start' 상태로 인해 응답 지연(Latency Spike) 발생.
 - **Task**: 동적 라우팅 전환 시점의 캐시 미스를 방지하고 부하 분산의 안정성 확보.
@@ -159,7 +159,7 @@ docker-compose logs -f runner
 - **Result**: 승격 구간의 급격한 성능 저하를 차단하고, Zipfian 워크로드 환경에서 부하 표준편차를 최대 33.8% 개선.
 
 ### 3. 데이터 정합성을 위한 Write-Primary 라우팅 설계
-[👉 포스트 보러가기](https://bh1848.github.io/hzeror/D-HASH-routing-strategy/)
+[👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-routing-strategy/)
 
 - **Situation**: 읽기 트래픽 분산을 위한 동적 라우팅 규칙을 쓰기 요청에도 동일하게 적용할 경우, 노드 간 데이터 파편화(Fragmentation) 및 정합성 불일치 위협 확인.
 - **Task**: 동적 로드 밸런싱 환경에서도 데이터의 무결성(Consistency)을 완벽하게 보장하는 아키텍처 수립.
@@ -167,7 +167,7 @@ docker-compose logs -f runner
 - **Result**: 복잡한 분산 락(Distributed Lock) 없이도 데이터 파편화 0%를 달성하며 시스템의 복잡도와 정합성 문제를 동시에 해결.
 
 ### 4. ThreadPoolExecutor를 이용한 비동기 벤치마크 환경 구축
-[👉 포스트 보러가기](https://bh1848.github.io/hzeror/D-HASH-threadpoolexecutor/)
+[👉 포스트 보러가기](https://hzeror.netlify.app/D-HASH-threadpoolexecutor/)
 
 - **Situation**: 동기식(Blocking I/O) 부하 테스트 수행 중, 서버 자원은 충분함에도 클라이언트의 네트워크 대기 시간(RTT)으로 인해 처리량(Throughput)이 정체되는 병목 현상 발생.
 - **Task**: 네트워크 지연을 배제하고 서버의 순수 최대 처리량(OPS)을 검증할 수 있는 논블로킹 테스트 환경 구축.
