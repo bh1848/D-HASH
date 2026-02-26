@@ -8,108 +8,100 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square"/>
 </p>
 
-> Official Implementation of the paper *"D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems"*, accepted in KSII Transactions on Internet and Information Systems (TIIS), 2026.
->
-> Author: Hyeok Bang ([@bh1848](https://github.com/bh1848))
+> **Official Implementation** of the paper: *"D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems"*, Accepted in **KSII TIIS**, 2026.
 
-> 💡 For Korean Visitors: 실험 과정과 상세 분석은 [REPORT_KR.md](./docs/REPORT_KR.md)에서 확인하실 수 있습니다.    
-<br>
+D-HASH is a lightweight, client-side routing layer built on top of Consistent Hashing to mitigate load imbalance caused by hot-keys in distributed cache systems.
 
-## 📌 Project Overview
-Hot-keys in distributed cache systems (e.g., Redis) cause severe load imbalance, leading to single-node bottlenecks.
-D-HASH introduces a dynamic routing layer on top of Consistent Hashing to detect and redistribute hot-key traffic in real-time.
+<br/>
 
-* Problem: Single node overload due to skewed traffic (Zipfian distribution).
-* Solution: Client-side hot-key detection & Window-based dynamic routing.
-* Impact: Reduced load standard deviation (imbalance) by 33.8% compared to Consistent Hashing.
+## 📌 Highlights
+* **Problem**: Single-node bottlenecks due to skewed Zipfian traffic.
+* **Solution**: Real-time hot-key detection & deterministic window-based routing.
+* **Result**: **33.8% reduction** in load standard deviation with minimal (~7%) throughput overhead.
 
-<br>
+<br/>
 
 ## 🏗️ Architecture
-The system consists of a Smart Client (monitoring & routing) and a Hashing Ring.
-When a hot-key is detected, requests are dynamically routed to an Alternate Node to offload the primary server.
-
 ![System Architecture](./docs/images/dhash_architecture.png)
 
-<br>
+<br/>
 
-## 💻 Key Logic
-The implementation focuses on memory efficiency and low latency.
-We used `__slots__` to minimize memory footprint during high-concurrency simulations.
+## ⚙️ Environment
+| Category | Specification |
+| :--- | :--- |
+| **Hardware** | Intel Core i5-1340P, 16GB RAM |
+| **OS** | Windows 11 (WSL2 Docker) |
+| **Runtime** | Python 3.11.13 |
+| **Stack** | Redis 7.4.2, redis-py 6.4.0, xxhash 3.6.0 
+
+<br/>
+
+## 🏗️ Core Logic: Guard Phase
+D-HASH uses a **Guard Phase** to prevent "Cold Start" on alternate nodes by maintaining primary routing for the first window ($W$) after promotion.
 
 ~~~python
 # src/dhash_experiments/algorithms.py
 
-class DHash:
-    # Memory optimization for large-scale simulation
-    __slots__ = ("nodes", "T", "W", "reads", "alt", "ch")
-
-    def get_node(self, key: Any, op: str = "read") -> str:
-        # 1. Write Consistency: Always route to Primary
-        if op == "write":
-            return self._primary_safe(key)
-
-        # 2. Hot-key Detection & Dynamic Routing
-        cnt = self.reads.get(key, 0) + 1
-        self.reads[key] = cnt
-        
-        # If hot-key, switch to Alternate Node based on Window Epoch
-        if cnt >= self.T:
-            self._ensure_alternate(key)
-            delta = cnt - self.T
-            epoch = (delta - self.W) // self.W
-            # Round-Robin between Primary and Alternate
-            return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)
-
+def get_node(self, key: Any, op: str = "read") -> str:
+    if op == "write":
         return self._primary_safe(key)
+
+    cnt = self.reads.get(key, 0) + 1
+    self.reads[key] = cnt
+    
+    if cnt >= self.T:
+        self._ensure_alternate(key)
+        delta = cnt - self.T
+        
+        # Guard Phase: Stick to Primary for the first window W
+        if delta < self.W:
+            return self._primary_safe(key)
+            
+        # Window-based switching between Primary and Alternate
+        epoch = (delta - self.W) // self.W
+        return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)
+
+    return self._primary_safe(key)
 ~~~
 
-<br>
+<br/>
 
 ## 🚀 Quick Start
-Reproduce the benchmark results using Docker Compose.
-
 ~~~bash
-# 1. Clone Repository
 git clone https://github.com/bh1848/D-HASH.git
 cd D-HASH
-
-# 2. Run Simulation (Redis Cluster + Benchmark)
 docker-compose up --build
-
-# 3. Check Logs
-docker-compose logs -f runner
 ~~~
 
-<br>
+<br/>
 
-## 📊 Benchmark Results
-Experiments were conducted under a High-Skew Zipfian Workload ($\alpha=1.5$).
+## 📊 Evaluation (Zipf $\alpha=1.5$)
+| Algorithm | Throughput (ops/s) | Load Std Dev (🔻) |
+| :--- | :--- | :--- |
+| Consistent Hashing | 179,902 | 49,944 |
+| **D-HASH (Ours)** | **167,092** | **33,054 (33.8%↓)** |
 
-| Algorithm | Throughput (ops/s) | Load Std Dev (Lower is better) | Improvement |
-| :--- | :--- | :--- | :--- |
-| Consistent Hashing (CH) | 179,902 | 49,944 | - |
-| D-HASH (Ours) | 167,092 | 33,054 | 🔻 33.8% |
+<br/>
 
-> Result: D-HASH significantly improves load balancing (33.8% lower Std Dev) with minimal throughput overhead (~7%).
-
-<br>
 
 ## 📝 Citation
-If you use this code for your research, please cite our paper:
-
 ~~~bibtex
 @article{bang2026dhash,
   title={D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems},
   author={Bang, Hyeok and Jeon, Sanghoon},
   journal={KSII Transactions on Internet and Information Systems},
   year={2026},
-  publisher={KSII},
   note={In Press}
 }
 ~~~
 
-<br>
+<br/>
 
 ## 📧 Contact
-For any questions, please contact Hyeok Bang at [bh1848@naver.com](mailto:bh1848@naver.com).
+For any questions regarding the algorithm or implementation, please contact:
+* **Hyeok Bang**: [bh1848@naver.com](mailto:bh1848@naver.com)
+
+<br/>
+
+## 📄 License
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
