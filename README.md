@@ -12,7 +12,7 @@
 
 D-HASH is a lightweight, client-side routing layer built on top of Consistent Hashing to mitigate load imbalance caused by hot-keys in distributed cache systems.
 
-**💡Korean Version**: 상세 한국어 설명은 [REPORT_KR.md](./docs/REPORT_KR.md)에서 확인하실 수 있습니다.
+[한국어 문서 바로가기](./docs/REPORT_KR.md)
 
 <br/>
 
