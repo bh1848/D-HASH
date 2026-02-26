@@ -16,7 +16,7 @@ D-HASH is a lightweight, client-side routing layer built on top of Consistent Ha
 
 <br/>
 
-## 📌 Highlights
+## Highlights
 * **Problem**: Single-node bottlenecks due to skewed Zipfian traffic.
 * **Solution**: Real-time hot-key detection & deterministic window-based routing.
 * **Result**: **33.8% reduction** in load standard deviation with minimal (~7%) throughput overhead.
