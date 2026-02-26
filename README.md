@@ -1,4 +1,4 @@
-# 📊 D-HASH: Dynamic Hot-key Aware Scalable Hashing
+# D-HASH: Dynamic Hot-key Aware Scalable Hashing
 
 <p align="left">
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white"/>
@@ -23,12 +23,12 @@ D-HASH is a lightweight, client-side routing layer built on top of Consistent Ha
 
 <br/>
 
-## 🏗️ Architecture
+## Architecture
 ![System Architecture](./docs/images/dhash_architecture.png)
 
 <br/>
 
-## ⚙️ Environment
+## Environment
 | Category | Specification |
 | :--- | :--- |
 | **Hardware** | Intel Core i5-1340P, 16GB RAM |
@@ -38,7 +38,7 @@ D-HASH is a lightweight, client-side routing layer built on top of Consistent Ha
 
 <br/>
 
-## 🏗️ Core Logic: Guard Phase
+## Core Logic: Guard Phase
 D-HASH uses a **Guard Phase** to prevent "Cold Start" on alternate nodes by maintaining primary routing for the first window ($W$) after promotion.
 
 ~~~python
@@ -68,7 +68,7 @@ def get_node(self, key: Any, op: str = "read") -> str:
 
 <br/>
 
-## 🚀 Quick Start
+## Quick Start
 ~~~bash
 git clone https://github.com/bh1848/D-HASH.git
 cd D-HASH
@@ -86,7 +86,7 @@ docker-compose up --build
 <br/>
 
 
-## 📝 Citation
+## Citation
 ~~~bibtex
 @article{bang2026dhash,
   title={D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems},
@@ -99,11 +99,11 @@ docker-compose up --build
 
 <br/>
 
-## 📧 Contact
+## Contact
 For any questions regarding the algorithm or implementation, please contact:
 * **Hyeok Bang**: [bh1848@naver.com](mailto:bh1848@naver.com)
 
 <br/>
 
-## 📄 License
+## License
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
