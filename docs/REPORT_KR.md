@@ -2,10 +2,11 @@
 
 > "분산 캐시 시스템의 Hot-key 병목 현상을 해결하는 클라이언트 사이드 동적 라우팅 알고리즘"
 
-<p>
+<p align="left">
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/Redis-7.4.2-DC382D?style=flat-square&logo=redis&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/TIIS_(SCIE)-In_Press-0066CC?style=flat-square&logo=googlescholar&logoColor=white"/>
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square"/>
 </p>
 
