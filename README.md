@@ -1,4 +1,4 @@
-# D-HASH: Dynamic Hot-key Aware Scalable Hashing
+# 📊 D-HASH: Dynamic Hot-key Aware Scalable Hashing
 
 <p align="left">
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white"/>
@@ -11,6 +11,8 @@
 > **Official Implementation** of the paper: *"D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems"*, Accepted in **KSII TIIS**, 2026.
 
 D-HASH is a lightweight, client-side routing layer built on top of Consistent Hashing to mitigate load imbalance caused by hot-keys in distributed cache systems.
+
+**💡 For Korean Visitors**: 상세한 내용은 [REPORT_KR.md](./docs/REPORT_KR.md)에서 확인하실 수 있습니다.
 
 <br/>
 
