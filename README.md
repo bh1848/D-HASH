@@ -1,9 +1,12 @@
 # D-HASH: Dynamic Hot-key Aware Scalable Hashing
 
-[![Paper](https://img.shields.io/badge/SCIE-Accepted-0066CC?style=flat-square&logo=googlescholar&logoColor=white)]()
-[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)]()
-[![Redis](https://img.shields.io/badge/Redis-Cluster-DC382D?style=flat-square&logo=redis&logoColor=white)]()
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+<p align="left">
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Redis-7.4.2-DC382D?style=flat-square&logo=redis&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/TIIS_(SCIE)-In_Press-0066CC?style=flat-square&logo=googlescholar&logoColor=white"/>
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square"/>
+</p>
 
 > Official Implementation of the paper *"D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems"*, accepted in KSII Transactions on Internet and Information Systems (TIIS), 2026.
 >
@@ -101,7 +104,8 @@ If you use this code for your research, please cite our paper:
   author={Bang, Hyeok and Jeon, Sanghoon},
   journal={KSII Transactions on Internet and Information Systems},
   year={2026},
-  publisher={KSII}
+  publisher={KSII},
+  note={In Press}
 }
 ~~~
 
