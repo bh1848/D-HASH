@@ -77,7 +77,7 @@ docker-compose up --build
 
 <br/>
 
-## 📊 Evaluation (Zipf $\alpha=1.5$)
+## Evaluation (Zipf $\alpha=1.5$)
 | Algorithm | Throughput (ops/s) | Load Std Dev (🔻) |
 | :--- | :--- | :--- |
 | Consistent Hashing | 179,902 | 49,944 |
