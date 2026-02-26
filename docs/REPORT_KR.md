@@ -60,22 +60,22 @@ return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)
 
 ## 5. 트러블슈팅
 
-### [1. 해싱 오버헤드 최적화 (`xxHash64`, `__slots__`)](https://hzeror.netlify.app/D-HASH-xxhash/)
+### [1. 해싱 오버헤드 최적화 (`xxHash64`, `__slots__`)](https://velog.io/@bh1848/xxHash64%EC%99%80-slots%EB%A5%BC-%ED%86%B5%ED%95%9C-Python-%EC%84%B1%EB%8A%A5-%EC%B5%9C%EC%A0%81%ED%99%94)
 - **문제**: 대규모 트래픽 시나리오에서 MD5 연산의 높은 CPU 비용으로 처리량이 급감하고, Python 객체 오버헤드로 인한 메모리 부족 발생.
 - **해결**: 고속 비암호화 해시 알고리즘인 `xxHash64`로 교체하고, `__slots__`를 적용해 인스턴스 메모리 점유율 최적화.
 - **결과**: **해싱 속도 20배 향상 및 메모리 50% 절감**으로 10만 개 이상의 고부하 테스트 환경 확보.
 
-### [2. 노드 전환 구간 지연(Latency Spike) 방어](https://hzeror.netlify.app/D-HASH-guard-phase/)
+### [2. 노드 전환 구간 지연(Latency Spike) 방어](https://velog.io/@bh1848/Hot-key-%EC%8A%B9%EA%B2%A9-%EC%A7%80%EC%97%B0%EC%9D%84-%EC%9C%84%ED%95%9C-Guard-Phase-%EC%84%A4%EA%B3%84)
 - **문제**: 핫키 탐지 직후 노드가 전환될 때, 대상 노드에 데이터가 없는 'Cold Start' 현상으로 인한 일시적 응답 지연 발생.
 - **해결**: 전환 전후로 데이터를 양쪽 노드에 유지하는 **Guard Phase** 설계와 비동기 사전 예열(Pre-warming) 전략 도입.
 - **결과**: 전환 구간 성능 저하를 방지하고, 극한의 쏠림 환경($\alpha=1.5$)에서 **부하 불균형 33.8% 개선**.
 
-### [3. 데이터 정합성을 위한 Write-Primary 구조](https://hzeror.netlify.app/D-HASH-routing-strategy/)
+### [3. 데이터 정합성을 위한 Write-Primary 구조](https://velog.io/@bh1848/%EB%8D%B0%EC%9D%B4%ED%84%B0-%EC%A0%95%ED%95%A9%EC%84%B1%EC%9D%84-%EC%9C%84%ED%95%9C-Write-Primary-%EB%9D%BC%EC%9A%B0%ED%8C%85-%EC%84%A4%EA%B3%84)
 - **문제**: 읽기 분산 로직을 쓰기 요청에 동일하게 적용할 경우, 데이터가 여러 노드에 파편화되어 최신성 보장이 어려움.
 - **해결**: 읽기는 부하에 따라 동적으로 분산하되, 쓰기는 해시 링이 지정한 **Primary 노드**에 항상 고정하는 라우팅 전략 채택.
 - **결과**: 복잡한 분산 락 없이 **데이터 파편화 0%** 달성 및 시스템 정합성 보장.
 
-### [4. 고부하 검증을 위한 비동기 테스트 툴 개발](https://hzeror.netlify.app/D-HASH-threadpoolexecutor/)
+### [4. 고부하 검증을 위한 비동기 테스트 툴 개발](https://velog.io/@bh1848/ThreadPoolExecutor%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%9C-%EB%B9%84%EB%8F%99%EA%B8%B0-%EB%B2%A4%EC%B9%98%EB%A7%88%ED%81%AC-%ED%99%98%EA%B2%BD-%EA%B5%AC%EC%B6%95)
 - **문제**: 동기 방식(Blocking I/O) 테스트는 클라이언트 대기 시간 때문에 서버의 실제 한계 처리량 측정 불가.
 - **해결**: `ThreadPoolExecutor` 기반의 I/O 병렬화와 노드별 버킷팅을 적용해 락 경합을 최소화한 전용 벤치마크 툴 개발.
 - **결과**: **180,000 OPS급 고부하 환경**을 구현하여 실제 운영 수준의 성능 검증 및 P99 지연 시간 정밀 데이터 확보.
