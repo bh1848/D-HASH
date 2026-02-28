@@ -63,7 +63,7 @@ return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)
 ### 1. Alternate가 Primary와 같은 물리 노드로 선택되던 문제
 
 **문제**  
-Hot-key 오프로딩에서 Alternate를 next-slot(다음 슬롯)로 고르던 로직이 있었는데, virtual node 링 특성상 Primary와 같은 physical node가 다시 선택될 수 있었음. 이 경우 오프로딩이 사실상 실패함.
+Hot-key 오프로딩에서 Alternate를 다음 슬롯으로 고르던 로직이 있었는데, virtual node 링 특성상 Primary와 같은 physical node가 다시 선택될 수 있었음. 이 경우 오프로딩이 사실상 실패함.
 
 **해결**  
 `_ensure_alternate()`에서 candidate를 고를 때마다 `candidate != ring[primary_idx].physical_node` 조건을 확인하도록 수정함.  
@@ -85,7 +85,7 @@ Hot-key 오프로딩에서 Alternate를 next-slot(다음 슬롯)로 고르던 �
 
 **해결**  
 `get_node()`에 Guard Phase(W 요청) 도입.  
-임계치 T 초과 직후 W번 요청은 Primary를 유지하고, Guard 이후에는 window(epoch) 단위로 Primary/Alternate를 번갈아 라우팅하도록 정리함.  
+임계치 T 초과 직후 W번 요청은 Primary를 유지하고, Guard 이후에는 window 단위로 Primary/Alternate를 번갈아 라우팅하도록 정리함.  
 또한 실험 시 초기 캐시 상태를 맞추기 위해 `warmup_cluster()`에서 Alternate에도 일부 키를 미리 적재하도록 보완함.
 
 **결과**  
