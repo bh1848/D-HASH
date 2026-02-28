@@ -92,7 +92,7 @@ Hot-key 오프로딩에서 Alternate를 다음 슬롯으로 고르던 로직이 
 Guard 적용 이후 전환 직후에 발생하던 연속 캐시 미스 구간이 완화되는 것을 로그 기준으로 확인함. 즉시 전환이 아니라, 준비 구간 후 분산하는 흐름으로 바뀜.
 
 **Blog**  
-[D-HASH에서 핫키 전환 직후 캐시 미스로 tail latency가 튀던 문제 해](https://velog.io/@bh1848/D-HASH%EC%97%90%EC%84%9C-%ED%95%AB%ED%82%A4-%EC%A0%84%ED%99%98-%EC%A7%81%ED%9B%84-%EC%BA%90%EC%8B%9C-%EB%AF%B8%EC%8A%A4%EB%A1%9C-tail-latency%EA%B0%80-%EC%95%85%ED%99%94%EB%90%98%EB%8D%98-%EB%AC%B8%EC%A0%9C)
+[D-HASH에서 핫키 전환 직후 캐시 미스로 tail latency가 튀던 문제 해결](https://velog.io/@bh1848/D-HASH%EC%97%90%EC%84%9C-%ED%95%AB%ED%82%A4-%EC%A0%84%ED%99%98-%EC%A7%81%ED%9B%84-%EC%BA%90%EC%8B%9C-%EB%AF%B8%EC%8A%A4%EB%A1%9C-tail-latency%EA%B0%80-%EC%95%85%ED%99%94%EB%90%98%EB%8D%98-%EB%AC%B8%EC%A0%9C)
 
 <br/>
 
