@@ -99,15 +99,18 @@ docker-compose up --build
 
 ---
 
-## Engineering Documentation
+# Troubleshooting Records (Engineering Notes)
 
-Detailed troubleshooting and design notes  
-(Korean, engineering-focused):
+This section documents implementation-level routing decisions and measurement refinements.
 
-- docs/troubleshooting/01_alternate_selection.md  
-- docs/troubleshooting/02_guard_phase.md  
-- docs/troubleshooting/03_routing_window.md  
-- docs/troubleshooting/04_weighted_percentile.md  
+All documents are written in Korean and focus on execution paths, branch conditions, and design trade-offs.
+
+## Index
+
+1. [Alternate selection path where A_k == P_k](./01_alternate_selection.md)
+2. [Guard phase and delayed switching after hot-key promotion](./02_guard_phase.md)
+3. [Window-based routing and request-level fluctuation control](./03_routing_window.md)
+4. [Weighted percentile and pipeline measurement alignment](./04_weighted_percentile.md)
 
 ---
 
