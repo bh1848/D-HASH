@@ -64,7 +64,7 @@ return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)
 - **문제**: 대규모 트래픽 시나리오에서 MD5 연산의 높은 CPU 비용으로 처리량이 급감하고, Python 객체 오버헤드로 인한 메모리 부족 발생.
 - **해결**: 고속 비암호화 해시 알고리즘인 `xxHash64`로 교체하고, `__slots__`를 적용해 인스턴스 메모리 점유율 최적화.
 - **결과**: **해싱 속도 20배 향상 및 메모리 50% 절감**으로 10만 개 이상의 고부하 테스트 환경 확보.
-- **Blog**: [xxHash와 slots로 파이썬 분산 병목 해결](https://velog.io/@bh1848/xxHash64%EC%99%80-slots%EB%A5%BC-%ED%86%B5%ED%95%9C-Python-%EC%84%B1%EB%8A%A5-%EC%B5%9C%EC%A0%81%ED%99%94)
+- **Blog**: [xxHash와 slots로 파이썬 분산 병목 해결](https://velog.io/@bh1848/Python-%ED%95%B4%EC%8B%B1-%EC%84%B1%EB%8A%A5-%EA%B0%9C%EC%84%A0-xxHash64%EC%99%80-slots-%ED%99%9C%EC%9A%A9)
 
 ### 2. 노드 전환 구간 지연(Latency Spike) 방어
 - **문제**: 핫키 탐지 직후 노드가 전환될 때, 대상 노드에 데이터가 없는 'Cold Start' 현상으로 인한 일시적 응답 지연 발생.
