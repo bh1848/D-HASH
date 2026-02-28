@@ -75,6 +75,25 @@ Hot-key 오프로딩에서 Alternate를 next-slot(다음 슬롯)로 고르던 �
 **Blog**  
 [D-HASH에서 Alternate가 Primary와 같은 물리 노드로 선택되던 문제 수정](https://velog.io/@bh1848/D-HASH%EC%97%90%EC%84%9C-Alternate%EA%B0%80-Primary%EC%99%80-%EA%B0%99%EC%9D%80-%EB%AC%BC%EB%A6%AC-%EB%85%B8%EB%93%9C%EB%A1%9C-%EC%84%A0%ED%83%9D%EB%90%98%EB%8D%98-%EB%AC%B8%EC%A0%9C-%EC%88%98%EC%A0%95)
 
+### 2. Hot-key 전환 직후 캐시 미스로 tail latency 증가
+
+**문제**  
+핫키 판정 직후 전환 구간에서 Alternate가 콜드 상태라 연속 캐시 미스가 발생했고, 전환 직후 tail latency가 튀는 현상을 로그로 확인함.
+
+**원인**  
+핫키 감지 직후 Alternate 쪽 캐시 예열 없이 read가 분산되면서 미스가 연속으로 발생함. cold node로 read가 몰리면 지연이 증가할 수 있음.
+
+**해결**  
+`get_node()`에 Guard Phase(W 요청) 도입.  
+임계치 T 초과 직후 W번 요청은 Primary를 유지하고, Guard 이후에는 window(epoch) 단위로 Primary/Alternate를 번갈아 라우팅하도록 정리함.  
+또한 실험 시 초기 캐시 상태를 맞추기 위해 `warmup_cluster()`에서 Alternate에도 일부 키를 미리 적재하도록 보완함.
+
+**결과**  
+Guard 적용 이후 전환 직후에 발생하던 연속 캐시 미스 구간이 완화되는 것을 로그 기준으로 확인함. 즉시 전환이 아니라, 준비 구간 후 분산하는 흐름으로 바뀜.
+
+**Blog**  
+[D-HASH에서 핫키 전환 직후 캐시 미스로 tail latency가 튀던 문제](https://velog.io/@bh1848/D-HASH%EC%97%90%EC%84%9C-%ED%95%AB%ED%82%A4-%EC%A0%84%ED%99%98-%EC%A7%81%ED%9B%84-%EC%BA%90%EC%8B%9C-%EB%AF%B8%EC%8A%A4%EB%A1%9C-tail-latency%EA%B0%80-%EC%95%85%ED%99%94%EB%90%98%EB%8D%98-%EB%AC%B8%EC%A0%9C)
+
 <br/>
 
 ## 6. 회고록
