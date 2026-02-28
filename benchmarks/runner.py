@@ -4,8 +4,9 @@ import argparse
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
+from benchmarks.workloads import Workload, build_zipf_workload, iter_batches, materialize_ops
 from dhash.hashing import (
     ConsistentHashing,
     RendezvousHashing,
@@ -17,12 +18,10 @@ from dhash.routing import DHash
 from dhash.utils.io import write_csv, write_json
 from dhash.utils.time import now_ns
 
-from benchmarks.workloads import Workload, build_zipf_workload, iter_batches, materialize_ops
-
 
 @dataclass(frozen=True)
 class RunConfig:
-    nodes: List[str]
+    nodes: list[str]
     threshold: int
     window: int
     replicas: int
@@ -30,21 +29,21 @@ class RunConfig:
     # workload sweep
     num_ops: int
     num_keys: int
-    alphas: List[float]
+    alphas: list[float]
     read_ratio: float
-    pipelines: List[int]
+    pipelines: list[int]
     seed: int
     repeats: int
 
     # algo sweep
-    algos: List[str]
+    algos: list[str]
 
 
-def _default_nodes(n: int) -> List[str]:
+def _default_nodes(n: int) -> list[str]:
     return [f"redis-{i}" for i in range(1, n + 1)]
 
 
-def _parse_algos(raw: str) -> List[str]:
+def _parse_algos(raw: str) -> list[str]:
     raw = raw.strip().lower()
     if raw == "all":
         return ["ch", "wch", "hrw", "dhash"]
@@ -52,7 +51,7 @@ def _parse_algos(raw: str) -> List[str]:
     parts = [x.strip().lower() for x in raw.split(",") if x.strip()]
     # keep order, de-dup
     seen = set()
-    out: List[str] = []
+    out: list[str] = []
     for p in parts:
         if p not in seen:
             seen.add(p)
@@ -88,7 +87,7 @@ def _make_router(algo: str, cfg: RunConfig):
     raise ValueError(f"Unknown algo: {algo}")
 
 
-def _load_stats(node_load: Dict[str, int], nodes: List[str]) -> Dict[str, float]:
+def _load_stats(node_load: dict[str, int], nodes: list[str]) -> dict[str, float]:
     vals = [float(node_load.get(n, 0)) for n in nodes]
     if not vals:
         return {"load_mean": 0.0, "load_max": 0.0, "load_min": 0.0}
@@ -104,7 +103,7 @@ def _run_one_workload(
     w: Workload,
     cfg: RunConfig,
     algo: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Execute one workload for one algorithm.
 
@@ -117,15 +116,15 @@ def _run_one_workload(
 
     router = _make_router(algo, cfg)
 
-    batch_samples: List[Tuple[float, int]] = []
-    node_load: Dict[str, int] = {n: 0 for n in cfg.nodes}
+    batch_samples: list[tuple[float, int]] = []
+    node_load: dict[str, int] = {n: 0 for n in cfg.nodes}
 
     total_ops = 0
     total_ns = 0
 
     for b_keys, b_ops in iter_batches(keys, ops, w.pipeline):
         b0 = now_ns()
-        for k, op in zip(b_keys, b_ops):
+        for k, op in zip(b_keys, b_ops, strict=False):
             node = router.get_node(k, op=op)
             node_load[node] = node_load.get(node, 0) + 1
         b1 = now_ns()
@@ -171,7 +170,7 @@ def _repeat_workload(
     cfg: RunConfig,
     algo: str,
     repeats: int,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Repeat one workload multiple times and summarize.
     """
@@ -190,7 +189,7 @@ def _repeat_workload(
         )
         results.append(_run_one_workload(w=wr, cfg=cfg, algo=algo))
 
-    def _mean(xs: List[float]) -> float:
+    def _mean(xs: list[float]) -> float:
         return float(sum(xs) / max(1, len(xs)))
 
     return {
@@ -209,8 +208,8 @@ def _repeat_workload(
     }
 
 
-def _build_workload_sweep(cfg: RunConfig) -> List[Workload]:
-    ws: List[Workload] = []
+def _build_workload_sweep(cfg: RunConfig) -> list[Workload]:
+    ws: list[Workload] = []
     for a in cfg.alphas:
         for p in cfg.pipelines:
             ws.append(
@@ -226,8 +225,10 @@ def _build_workload_sweep(cfg: RunConfig) -> List[Workload]:
     return ws
 
 
-def _flatten_csv_rows(run_id: str, cfg: RunConfig, summaries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    rows: List[Dict[str, Any]] = []
+def _flatten_csv_rows(
+    run_id: str, cfg: RunConfig, summaries: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
     for s in summaries:
         w = s["workload"]
         rows.append(
@@ -260,7 +261,7 @@ def _flatten_csv_rows(run_id: str, cfg: RunConfig, summaries: List[Dict[str, Any
     return rows
 
 
-def main(argv: List[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="dhash-bench")
 
     ap.add_argument("--out", default="benchmarks/outputs", help="output directory")
@@ -268,7 +269,9 @@ def main(argv: List[str] | None = None) -> int:
 
     ap.add_argument("--threshold", type=int, default=50, help="hot-key threshold T (DHash)")
     ap.add_argument("--window", type=int, default=500, help="routing window W (DHash)")
-    ap.add_argument("--replicas", type=int, default=100, help="virtual replicas (CH/WCH/DHash ring)")
+    ap.add_argument(
+        "--replicas", type=int, default=100, help="virtual replicas (CH/WCH/DHash ring)"
+    )
 
     ap.add_argument("--num-ops", type=int, default=200_000)
     ap.add_argument("--num-keys", type=int, default=10_000)
@@ -308,7 +311,7 @@ def main(argv: List[str] | None = None) -> int:
 
     workloads = _build_workload_sweep(cfg)
 
-    summaries: List[Dict[str, Any]] = []
+    summaries: list[dict[str, Any]] = []
     for algo in cfg.algos:
         for w in workloads:
             summaries.append(_repeat_workload(w=w, cfg=cfg, algo=algo, repeats=cfg.repeats))
