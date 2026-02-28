@@ -1,33 +1,23 @@
-# ===== Python =====
+# python
 __pycache__/
 *.py[cod]
-*.pyo
 *.pyd
 *.so
-
-# Virtual environments
+*.egg-info/
+dist/
+build/
 .venv/
-env/
 venv/
 
-# Jupyter
-.ipynb_checkpoints/
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
 
-# ===== Build / Packaging =====
-build/
-dist/
-*.egg-info/
-
-# ===== OS / Editor Files =====
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
-.idea/
+# editors
 .vscode/
+.idea/
 
-# ===== Logs =====
-*.log
-
-# ===== Docker =====
-.docker/
+# benchmarks outputs
+benchmarks/outputs/*
+!benchmarks/outputs/.gitkeep
