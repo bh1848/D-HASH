@@ -18,7 +18,7 @@ This repository contains the implementation of:
 Accepted in *KSII Transactions on Internet and Information Systems (SCIE)*, 2026 (In Press).
 
 For Korean engineering-focused documentation:  
-👉 See [README_kr.md](./docs/README_kr.md)
+👉 See [docs/README_kr.md](docs/README_kr.md)
 
 ---
 
@@ -39,7 +39,8 @@ No server-side modification is required.
 
 ## Guard Phase (Implementation-Consistent Snippet)
 
-The early-return condition is defined before this block in `get_node()`.
+This snippet reflects the post-threshold switching logic inside `get_node()`.  
+The early return for non-hot keys is evaluated before this block.  
 
 ```python
 delta = max(0, cnt - self.T)
@@ -58,7 +59,7 @@ Switching occurs only after the guard window.
 ## Measurement Alignment
 
 In pipelined workloads, one latency sample may represent multiple operations.  
-Percentile calculation is weighted by operation count.
+Percentile calculation is weighted by operation count rather than batch count.  
 
 ```python
 def _weighted_percentile(samples, q):
@@ -99,15 +100,11 @@ docker-compose up --build
 
 ---
 
-## Engineering Documentation
+## Troubleshooting Records (Engineering Notes)
 
-Detailed troubleshooting and design notes  
-(Korean, engineering-focused):
+Detailed engineering records (Korean):
 
-- docs/troubleshooting/01_alternate_selection.md  
-- docs/troubleshooting/02_guard_phase.md  
-- docs/troubleshooting/03_routing_window.md  
-- docs/troubleshooting/04_weighted_percentile.md  
+👉 See [docs/troubleshooting](./docs/troubleshooting/README.md)
 
 ---
 
