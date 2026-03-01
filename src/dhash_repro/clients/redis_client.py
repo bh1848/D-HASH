@@ -3,7 +3,7 @@ import random
 import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast, TYPE_CHECKING
 from redis import Redis, ConnectionPool
 from ..config.defaults import SEED
 
@@ -11,13 +11,19 @@ logger = logging.getLogger(__name__)
 _connection_pools: Dict[str, ConnectionPool] = {}
 
 
-def _redis_client(host: str) -> Redis[Any]:
+if TYPE_CHECKING:
+    RedisInstance = Redis[Any]
+else:
+    RedisInstance = Redis
+
+
+def _redis_client(host: str) -> RedisInstance:
     if host not in _connection_pools:
         _connection_pools[host] = ConnectionPool(host=host, port=6379, db=0)
     return Redis(connection_pool=_connection_pools[host])
 
 
-def redis_client_for_node(node: str) -> Redis[Any]:
+def redis_client_for_node(node: str) -> RedisInstance:
     return _redis_client(node)
 
 
@@ -32,16 +38,16 @@ def warmup_cluster(sharding: Any, keys: List[Any], ratio: float = 0.01, cap: int
     for k in sample:
         p_node = sharding.get_node(k, op="write")
         write_buckets[p_node].append(k)
-        # Alternate node warm-up if supported
+
         if hasattr(sharding, "alt") and hasattr(sharding, "_h"):
             try:
-                # Force evaluate alternate to populate sharding.alt dict
                 sharding.get_node(k, op="read")
             except Exception:
                 pass
-            a_node = sharding.alt.get(k)
+            a_node = cast(Dict[Any, str], sharding.alt).get(k)
             if a_node and a_node != p_node:
                 write_buckets[a_node].append(k)
+
         read_buckets[sharding.get_node(k, op="read")].append(k)
 
     payload = b'{"warm":1}'
@@ -53,7 +59,7 @@ def warmup_cluster(sharding: Any, keys: List[Any], ratio: float = 0.01, cap: int
                 pipe.set(str(k), payload, ex=60)
             pipe.execute()
         except Exception as e:
-            logger.warning(f"Warmup write failed on {node}: {e}")
+            logger.warning("Warmup write failed on %s: %s", node, e)
 
     for node, node_keys in read_buckets.items():
         try:
@@ -63,7 +69,7 @@ def warmup_cluster(sharding: Any, keys: List[Any], ratio: float = 0.01, cap: int
                 pipe.get(str(k))
             pipe.execute()
         except Exception as e:
-            logger.warning(f"Warmup read failed on {node}: {e}")
+            logger.warning("Warmup read failed on %s: %s", node, e)
 
     logger.info(
         "[Warmup] Populated %d keys across %d nodes.",
@@ -80,10 +86,12 @@ def flush_databases(redis_nodes: List[str], flush_async: bool = False) -> None:
                 try:
                     cli.flushdb(asynchronous=True)
                 except TypeError:
-                    cli.execute_command("FLUSHDB", "ASYNC")
+                    cast(Any, cli).execute_command("FLUSHDB", "ASYNC")
+
                 for _ in range(10_000):
                     try:
-                        if int(cli.dbsize()) == 0:
+                        db_size = cli.dbsize()
+                        if int(cast(Any, db_size)) == 0:
                             break
                     except Exception:
                         pass
@@ -92,7 +100,7 @@ def flush_databases(redis_nodes: List[str], flush_async: bool = False) -> None:
                 try:
                     cli.flushdb()
                 except TypeError:
-                    cli.execute_command("FLUSHDB")
+                    cast(Any, cli).execute_command("FLUSHDB")
         except Exception as e:
             logger.warning("Redis(%s) flush failed: %s", container, e)
 
