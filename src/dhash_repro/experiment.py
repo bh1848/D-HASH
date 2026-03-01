@@ -16,7 +16,7 @@ from .config.defaults import (
 from .workloads.zipf import generate_zipf_workload
 from .clients.redis_client import flush_databases, warmup_cluster
 from .benchmark.collectors import benchmark_cluster, load_stddev
-from .results.writer import save_to_csv
+from .persistence.writer import save_to_csv
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def run_single_mode(
 
 
 def run_experiments(mode: str, alpha: float, repeats: int) -> None:
-    os.makedirs("results", exist_ok=True)
+    os.makedirs("persistence", exist_ok=True)
     keys = [f"key-{i}" for i in range(100_000)]
 
     if mode in ("pipeline", "all"):
@@ -97,7 +97,7 @@ def run_experiments(mode: str, alpha: float, repeats: int) -> None:
                     d_p = {"T": max(30, B), "W": B} if m == "D-HASH" else None
                     t, _, _, _, s = run_single_mode(kz, m, B, d_p)
                     results.append({"Mode": m, "Pipeline": B, "Thr": t, "LoadSD": s})
-        save_to_csv(results, "results/pipeline_sweep.csv")
+        save_to_csv(results, "persistence/pipeline_sweep.csv")
 
     if mode in ("zipf", "all"):
         results = []
@@ -113,7 +113,7 @@ def run_experiments(mode: str, alpha: float, repeats: int) -> None:
                     )
                     t, _, _, _, s = run_single_mode(kz, m, PIPELINE_SIZE_DEFAULT, d_p)
                     results.append({"Mode": m, "Alpha": a, "Thr": t, "LoadSD": s})
-        save_to_csv(results, "results/zipf_results.csv")
+        save_to_csv(results, "persistence/zipf_results.csv")
 
-    save_to_csv([runtime_env_metadata(repeats)], "results/env_metadata.csv")
+    save_to_csv([runtime_env_metadata(repeats)], "persistence/env_metadata.csv")
     logger.info("All experiments finished.")
