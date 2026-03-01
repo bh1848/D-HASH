@@ -48,8 +48,8 @@ python -m benchmarks.runner --help
 
 ## Documentation
 
-- English documentation: `docs/README.md`
-- Korean documentation: `docs/README_kr.md`
+- [English documentation](docs/README.md)
+- [Korean documentation](docs/README_kr.md)
 
 ---
 
