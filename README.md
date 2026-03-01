@@ -1,124 +1,55 @@
-# D-HASH  
+# D-HASH
+
 Dynamic Hot-key Aware Scalable Hashing
 
-<p align="left">
-  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Redis-7.4.2-DC382D?style=flat-square&logo=redis&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white"/>
-  <img src="https://img.shields.io/badge/TIIS_(SCIE)-Accepted_(In_Press)-0066CC?style=flat-square&logo=googlescholar&logoColor=white"/>
-  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square"/>
-</p>
-
-> Client-side routing layer for mitigating hot-key load imbalance  
-> Built on top of Consistent Hashing
-
-This repository contains the implementation of:
-
-**D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems**  
-Accepted in *KSII Transactions on Internet and Information Systems (SCIE)*, 2026 (In Press).
-
-For Korean engineering-focused documentation:  
-👉 See [docs/README_kr.md](docs/README_kr.md)
+Client-side routing layer for mitigating hot-key load imbalance  
+Built on top of Consistent Hashing
 
 ---
 
-## Motivation
+## Paper Snapshot
 
-Zipf-distributed workloads create hot-keys that concentrate traffic on a single node.  
-Consistent Hashing preserves mapping stability but does not regulate read concentration.
-
-D-HASH introduces:
-
-- Client-side hot-key detection  
-- Deterministic window-based routing  
-- Separation of alternate selection and switching timing  
-
-No server-side modification is required.
-
----
-
-## Guard Phase (Implementation-Consistent Snippet)
-
-This snippet reflects the post-threshold switching logic inside `get_node()`.  
-The early return for non-hot keys is evaluated before this block.  
-
-```python
-delta = max(0, cnt - self.T)
-
-if delta < self.W:
-    return self._primary_safe(key)
-
-epoch = (delta - self.W) // self.W
-return self.alt[key] if (epoch % 2 == 0) else self._primary_safe(key)
-```
-
-Switching occurs only after the guard window.
-
----
-
-## Measurement Alignment
-
-In pipelined workloads, one latency sample may represent multiple operations.  
-Percentile calculation is weighted by operation count rather than batch count.  
-
-```python
-def _weighted_percentile(samples, q):
-    samples_sorted = sorted(samples, key=lambda x: x[0])
-    total_w = sum(w for _, w in samples_sorted)
-    target = q * total_w
-    ...
-```
-
-ConnectionPool reuse isolates connection variability from latency measurement.
-
----
-
-## Architecture
-
-![System Architecture](./docs/images/dhash_architecture.png)
-
----
-
-## Experimental Snapshot (Zipf α=1.5)
-
-| Algorithm | Throughput (ops/s) | Load Std Dev |
-|-----------|-------------------|--------------|
-| Consistent Hashing | 179,902 | 49,944 |
-| D-HASH | 167,092 | 33,054 |
-
-Experimental configuration is provided in the benchmark module.
-
----
-
-## Reproducibility
+The implementation used for the TIIS 2026 (In Press) paper is preserved as a git tag.
 
 ```bash
-git clone https://github.com/bh1848/D-HASH.git
-cd D-HASH
-docker-compose up --build
+git checkout tiis-2026-inpress
+```
+
+The `main` branch contains the actively maintained engineering structure.
+Routing semantics defined in the paper are preserved unless explicitly versioned.
+
+---
+
+## Project Structure
+
+- `src/dhash/` — Routing and hashing implementation
+- `benchmarks/` — Benchmark runner and workload generators
+- `tests/` — Unit tests
+- `docs/` — Design, reproduction, and reference documentation
+- `scripts/` — Helper scripts (lint, test, benchmark)
+
+---
+
+## Installation
+
+```bash
+pip install -e ".[dev]"
 ```
 
 ---
 
-## Troubleshooting Records (Engineering Notes)
+## Benchmark
 
-Detailed engineering records (Korean):
-
-👉 See [docs/troubleshooting](./docs/troubleshooting/README.md)
+```bash
+python -m benchmarks.runner --help
+```
 
 ---
 
-## Citation
+## Documentation
 
-```bibtex
-@article{bang2026dhash,
-  title={D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems},
-  author={Bang, Hyeok and Jeon, Sanghoon},
-  journal={KSII Transactions on Internet and Information Systems},
-  year={2026},
-  note={Accepted, In Press}
-}
-```
+- English documentation: `docs/README.md`
+- Korean documentation: `docs/README_kr.md`
 
 ---
 

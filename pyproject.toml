@@ -34,7 +34,6 @@ dev = [
 
 [project.scripts]
 dhash = "dhash.cli:main"
-dhash-bench = "benchmarks.runner:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
