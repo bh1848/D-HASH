@@ -8,6 +8,7 @@ such as the random number generator (RNG) seed.
 
 from __future__ import annotations
 
+import importlib.util as _importlib_util
 import logging
 import platform
 from typing import Any
@@ -72,12 +73,7 @@ def runtime_env_metadata(repeats: int = NUM_REPEATS) -> dict[str, Any]:
     """Returns a dictionary of environment versions for reproducibility reports."""
     import redis as _redis_pkg
 
-    try:
-        import hiredis
-
-        hiredis_enabled = True
-    except ImportError:
-        hiredis_enabled = False
+    hiredis_enabled = _importlib_util.find_spec("hiredis") is not None
 
     return {
         "seed": SEED,

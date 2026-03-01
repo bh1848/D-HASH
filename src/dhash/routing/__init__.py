@@ -5,7 +5,7 @@ Routing algorithms (D-HASH).
 from __future__ import annotations
 
 from bisect import bisect
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..config import REPLICAS
 from ..hashing import ConsistentHashing, fast_hash64
