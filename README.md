@@ -35,6 +35,11 @@ Routing semantics defined in the paper are preserved unless explicitly versioned
 ```bash
 pip install -e ".[dev]"
 ```
+Benchmark/reproduction dependencies:
+
+```bash
+pip install -r requirements.repro.txt
+```
 
 ---
 
