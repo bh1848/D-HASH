@@ -1,23 +1,17 @@
-"""
-D-HASH: Dynamic Hot-key Aware Scalable Hashing
-
-Public exports are intentionally small and stable.
-"""
-
-from __future__ import annotations
-
-from .hashing import (
+from .hashing.core import (
     ConsistentHashing,
-    RendezvousHashing,
     WeightedConsistentHashing,
+    RendezvousHashing,
     fast_hash64,
 )
 from .routing import DHash
+from .stats import weighted_percentile
 
 __all__ = [
-    "fast_hash64",
     "ConsistentHashing",
     "WeightedConsistentHashing",
     "RendezvousHashing",
     "DHash",
+    "fast_hash64",
+    "weighted_percentile",
 ]

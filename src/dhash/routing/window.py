@@ -1,27 +1,9 @@
-"""
-Window-based routing logic for D-HASH.
-"""
-
-from __future__ import annotations
-
-from collections.abc import Callable
-from typing import Any
-
-
-def pick_node_by_window(
-    *,
-    delta: int,
-    W: int,
-    alt_node: str,
-    primary_fn: Callable[[Any], str],
-    key: Any,
+def select_window_route(
+    cnt: int, threshold: int, window_size: int, primary: str, alternate: str
 ) -> str:
     """
-    Window-based Traffic Switching.
-
-    This matches:
-        epoch = (delta - W) // W
-        return alt if epoch % 2 == 0 else primary
+    Alternates traffic between primary and alternate nodes based on the current window epoch.
     """
-    epoch = (delta - W) // W
-    return alt_node if (epoch % 2 == 0) else primary_fn(key)
+    delta = max(0, cnt - threshold)
+    epoch = (delta - window_size) // window_size
+    return alternate if (epoch % 2 == 0) else primary

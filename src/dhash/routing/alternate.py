@@ -1,55 +1,42 @@
-"""
-Alternate node selection for D-HASH.
-"""
-
-from __future__ import annotations
-
 from bisect import bisect
-from typing import Any
+from typing import Any, Callable, Dict, List
 
 
-def ensure_alternate(self: Any, key: Any) -> None:
-    """
-    Selects an Alternate Node (A_k) for a hot-key.
-    Ensures A_k is distinct from P_k using auxiliary hashing.
-
-    This function is a direct move of the original DHash._ensure_alternate logic.
-    """
-    if key in self.alt:
+def ensure_alternate(
+    key: Any,
+    alt_dict: Dict[Any, str],
+    nodes: List[str],
+    ring_keys: List[int],
+    ring_map: Dict[int, str],
+    hash_fn: Callable[[Any], int],
+    primary: str,
+) -> None:
+    if key in alt_dict:
         return
 
-    rk = getattr(self.ch, "sorted_keys", None)
-    ring = getattr(self.ch, "ring", None)
-
-    if not rk or not ring or len(self.nodes) <= 1:
-        # Fallback if cluster is too small
-        self.alt[key] = self._primary_safe(key)
+    if not ring_keys or not ring_map or len(nodes) <= 1:
+        alt_dict[key] = primary
         return
 
-    hk = self._h(key)
-    i = bisect(rk, hk) % len(rk)
-    primary = ring[rk[i]]
+    hk = hash_fn(key)
+    i = bisect(ring_keys, hk) % len(ring_keys)
+    stride_span = max(1, len(nodes) - 1)
+    stride = 1 + (hash_fn(f"{key}|alt") % stride_span)
 
-    # Use auxiliary hash to find a different node in the ring
-    stride_span = max(1, len(self.nodes) - 1)
-    stride = 1 + (self._h(f"{key}|alt") % stride_span)
-
-    # 1. Try stride-based selection
     j = i
-    for _ in range(len(rk)):
-        j = (j + stride) % len(rk)
-        cand = ring[rk[j]]
+    for _ in range(len(ring_keys)):
+        j = (j + stride) % len(ring_keys)
+        cand = ring_map[ring_keys[j]]
         if cand != primary:
-            self.alt[key] = cand
+            alt_dict[key] = cand
             return
 
-    # 2. Linear scan fallback (rarely hit)
     j = i
-    for _ in range(len(rk)):
-        j = (j + 1) % len(rk)
-        cand = ring[rk[j]]
+    for _ in range(len(ring_keys)):
+        j = (j + 1) % len(ring_keys)
+        cand = ring_map[ring_keys[j]]
         if cand != primary:
-            self.alt[key] = cand
+            alt_dict[key] = cand
             return
 
-    self.alt[key] = primary
+    alt_dict[key] = primary

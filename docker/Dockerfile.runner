@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=123 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /workspace
+
+# Copy all files first (README and src are required by pyproject.toml)
+COPY . .
+
+# Install package and dependencies (standard install for container environments)
+RUN pip install --no-cache-dir ".[dev]"
+
+CMD ["dhash-repro", "--mode", "all"]

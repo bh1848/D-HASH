@@ -1,23 +1,43 @@
-# python
+# Python
 __pycache__/
 *.py[cod]
-*.pyd
+*$py.class
 *.so
-*.egg-info/
-dist/
+.Python
+env/
 build/
-.venv/
-venv/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# pytest
+# Virtual Environment
+venv/
+.env
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Tools
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 
-# editors
-.vscode/
-.idea/
-
-# benchmarks outputs
-benchmarks/outputs/*
-!benchmarks/outputs/.gitkeep
+# Results
+results/
+*.csv

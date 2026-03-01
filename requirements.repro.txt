@@ -1,5 +1,0 @@
-# Reproduction / benchmark extras
-# Core runtime + dev dependencies are managed via pyproject.toml
-
-redis>=5
-hiredis>=2

@@ -2,59 +2,77 @@
 
 Dynamic Hot-key Aware Scalable Hashing
 
-Client-side routing layer for mitigating hot-key load imbalance  
-Built on top of Consistent Hashing
+A client-side routing layer designed to mitigate load imbalance caused by hot-keys.
+Built on top of Consistent Hashing with dynamic re-routing capabilities.
 
 ---
 
 ## Paper Snapshot
 
-The implementation used for the TIIS 2026 (In Press) paper is preserved as a git tag.
+The implementation used for the **TIIS 2026 (In Press)** paper is preserved as a git tag.
 
 ```bash
 git checkout tiis-2026-inpress
 ```
 
 The `main` branch contains the actively maintained engineering structure.
-Routing semantics defined in the paper are preserved unless explicitly versioned.
+Routing semantics defined in the paper are strictly preserved unless explicitly versioned.
 
 ---
 
 ## Project Structure
 
-- `src/dhash/` — Routing and hashing implementation
-- `benchmarks/` — Benchmark runner and workload generators
-- `tests/` — Unit tests
+- `src/dhash/` — Core library (Routing and hashing implementation)
+- `src/dhash_repro/` — Experiment harness and reproduction workloads
+- `tests/` — Unit tests mirrored from `src/dhash`
 - `docs/` — Design, reproduction, and reference documentation
-- `scripts/` — Helper scripts (lint, test, benchmark)
+- `Makefile` — Unified entry point for development and reproduction tasks
 
 ---
 
 ## Installation
 
-```bash
-pip install -e ".[dev]"
-```
-Benchmark/reproduction dependencies:
+All dependencies for both the core library and reproduction environment are managed via `pyproject.toml`. This ensures environment consistency without the need for fragmented `requirements.txt` files.
 
 ```bash
-pip install -r requirements.repro.txt
+# Install core library and all development/reproduction dependencies
+make install
+```
+
+*Note: This command installs the package in editable mode (`-e`) along with `pandas`, `numpy`, `redis`, and necessary dev tools.*
+
+---
+
+## Benchmark & Reproduction
+
+You can execute the full suite of experiments using the unified CLI or the provided `Makefile`.
+
+```bash
+# Run all experimental stages (Pipeline sweep, Zipf analysis, etc.)
+make repro
+
+# Or use the CLI directly for specific configurations
+dhash-repro --mode zipf --repeats 10
 ```
 
 ---
 
-## Benchmark
+## Development Workflow
+
+Maintain code quality and consistency using the following standardized commands:
 
 ```bash
-python -m benchmarks.runner --help
+make check   # Run formatter, linter, type-checker, and unit tests
+make test    # Run unit tests only
+make format  # Auto-format code using Ruff
 ```
 
 ---
 
 ## Documentation
 
-- [English documentation](docs/README.md)
-- [Korean documentation](docs/README_kr.md)
+- [English Documentation](docs/README.md)
+- [Korean Documentation](docs/README_kr.md)
 
 ---
 

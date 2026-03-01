@@ -1,15 +1,7 @@
-"""
-Guard phase logic for D-HASH.
-"""
-
-from __future__ import annotations
-
-
-def in_guard_phase(delta: int, W: int) -> bool:
+def check_guard_phase(cnt: int, threshold: int, window_size: int) -> bool:
     """
-    Guard Phase: Stick to Primary for first W requests after promotion.
-
-    This matches:
-        if delta < self.W: return primary
+    Returns True if the routing should stick to the primary node
+    to allow the alternate node's cache to warm up.
     """
-    return delta < W
+    delta = max(0, cnt - threshold)
+    return delta < window_size
