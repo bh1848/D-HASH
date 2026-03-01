@@ -12,7 +12,7 @@ _connection_pools: Dict[str, ConnectionPool] = {}
 
 
 if TYPE_CHECKING:
-    RedisInstance = Redis[Any]
+    RedisInstance = Any
 else:
     RedisInstance = Redis
 
