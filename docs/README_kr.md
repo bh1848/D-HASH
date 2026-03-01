@@ -47,10 +47,10 @@ Primary는 항상 해싱 결과를 기준으로 한다.
 
 ### 3.1 Write는 Primary 고정
 
-~~~python
+```python
 if op == "write":
     return self._primary_safe(key)
-~~~
+```
 
 write는 Primary로 고정한다.
 read 요청에서만 경로 조정을 고려한다.
@@ -59,10 +59,10 @@ read 요청에서만 경로 조정을 고려한다.
 
 ### 3.2 Guard 구간
 
-~~~python
+```python
 delta = max(0, cnt - threshold)
 return delta < window_size
-~~~
+```
 
 임계치 직후에는 Primary를 유지한다.
 즉시 전환하지 않는다.
@@ -71,13 +71,13 @@ return delta < window_size
 
 ### 3.3 Window 전환
 
-~~~python
+```python
 epoch = (delta - window_size) // window_size
 
 if epoch % 2 == 0:
     return alt_node
 return primary_fn(key)
-~~~
+```
 
 전환은 window 단위로 계산된다.
 같은 epoch 안에서는 노드가 바뀌지 않는다.
@@ -88,10 +88,10 @@ return primary_fn(key)
 
 ### 3.4 Alternate 후보는 물리 노드 기준
 
-~~~python
+```python
 if cand != primary:
     return cand
-~~~
+```
 
 가상노드 기반 링에서는 슬롯이 달라도
 물리 노드는 같을 수 있다.
@@ -102,11 +102,11 @@ if cand != primary:
 
 ### 3.5 Weighted Percentile
 
-~~~python
+```python
 samples_sorted = sorted(samples, key=lambda x: x[0])
 total_w = sum(w for _, w in samples_sorted)
 target = q * total_w
-~~~
+```
 
 파이프라인 환경에서는 하나의 latency 샘플이
 여러 operation을 포함할 수 있다.
