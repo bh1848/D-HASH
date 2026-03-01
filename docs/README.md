@@ -8,9 +8,11 @@ This directory contains structured documentation for the D-HASH implementation.
 
 - [01 Overview](design/01_overview.md)
 - [02 Hashing](design/02_hashing.md)
-- [03 Routing — Guard Phase](design/03_routing_guard_phase.md)
-- [04 Routing — Window Alternation](design/04_routing_window.md)
-- [05 Measurement](design/05_measurement.md)
+- [03 Router](design/03_router.md)
+- [04 Guard](design/04_guard.md)
+- [05 Alternate](design/05_alternate.md)
+- [06 Window](design/06_window.md)
+- [07 Stats](design/07_stats.md)
 
 ---
 
@@ -31,7 +33,7 @@ This directory contains structured documentation for the D-HASH implementation.
 
 ## Troubleshooting
 
-- [Alternate Selection](troubleshooting/01_alternate_selection.md)
-- [Guard Phase](troubleshooting/02_guard_phase.md)
-- [Routing Window](troubleshooting/03_routing_window.md)
-- [Weighted Percentile](troubleshooting/04_weighted_percentile.md)
+- [01 Alternate](troubleshooting/01_alternate.md)
+- [02 Guard](troubleshooting/02_guard.md)
+- [03 Window](troubleshooting/03_window.md)
+- [04 Weighted Percentile](troubleshooting/04_weighted_percentile.md)

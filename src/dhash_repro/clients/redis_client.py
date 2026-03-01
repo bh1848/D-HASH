@@ -5,6 +5,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, cast, TYPE_CHECKING
 from redis import Redis, ConnectionPool
+from dhash.routing.alternate import ensure_alternate
 from ..config.defaults import SEED
 
 logger = logging.getLogger(__name__)
@@ -39,11 +40,16 @@ def warmup_cluster(sharding: Any, keys: List[Any], ratio: float = 0.01, cap: int
         p_node = sharding.get_node(k, op="write")
         write_buckets[p_node].append(k)
 
-        if hasattr(sharding, "alt") and hasattr(sharding, "_h"):
-            try:
-                sharding.get_node(k, op="read")
-            except Exception:
-                pass
+        if hasattr(sharding, "alt") and hasattr(sharding, "ch"):
+            ensure_alternate(
+                k,
+                sharding.alt,
+                sharding.nodes,
+                getattr(sharding.ch, "sorted_keys", []),
+                getattr(sharding.ch, "ring", {}),
+                getattr(sharding, "_h", hash),
+                p_node,
+            )
             a_node = cast(Dict[Any, str], sharding.alt).get(k)
             if a_node and a_node != p_node:
                 write_buckets[a_node].append(k)

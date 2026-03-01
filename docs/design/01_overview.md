@@ -1,29 +1,61 @@
-# 01 Overview
+# 01. Overview
 
-This document describes the structural components of D-HASH.
+## Purpose
 
-D-HASH consists of three layers:
+D-HASH is a client-side routing layer built on top of hashing-based key distribution.
 
-1. Hashing Layer
-   - Consistent Hashing ring
-   - Virtual nodes (replicas)
-   - Deterministic primary resolution
+It addresses node-level imbalance caused by hot-keys
+while preserving deterministic hashing as the baseline mapping.
 
-2. Routing Layer
-   - Hot-key detection (threshold T)
-   - Guard phase
-   - Window-based alternation
-   - Deterministic alternate selection
+The storage layer remains unchanged.
 
-3. Measurement Layer
-   - Batch-based latency measurement
-   - Weighted percentile aggregation
-   - Load imbalance statistics
+---
 
-The implementation separates these concerns into:
+## System Structure
 
-- `hashing.py`
-- `routing/*`
-- `measure/*`
+The system is divided into two layers:
 
-The main branch preserves the routing semantics defined in the TIIS paper.
+- **Hashing layer** (`src/dhash/hashing/`)
+- **Routing layer** (`src/dhash/routing/`)
+
+Hashing determines the primary node.
+Routing may conditionally override that decision.
+
+---
+
+## Routing Composition
+
+The routing layer consists of:
+
+- `router` — execution control
+- `guard` — eligibility evaluation
+- `alternate` — alternate node selection
+- `window` — temporal stabilization
+- `stats` — runtime statistics
+
+Each module has a single responsibility.
+
+---
+
+## Execution Flow
+
+For each request:
+
+1. Compute primary node via hashing.
+2. Update runtime statistics.
+3. Evaluate guard conditions.
+4. If allowed, select alternate node.
+5. Apply window stabilization.
+6. Return final target node.
+
+Hashing provides the baseline.
+Routing introduces conditional deviation.
+
+---
+
+## Design Characteristics
+
+- Deterministic primary mapping
+- Adaptive routing under controlled conditions
+- Explicit module boundaries
+- Reproducible execution behavior

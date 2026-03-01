@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from statistics import stdev
 from typing import Any, Dict, List, Tuple
 from dhash import weighted_percentile
+from dhash.routing.alternate import ensure_alternate
 from ..config.defaults import NODES, PIPELINE_SIZE_DEFAULT, TTL_SECONDS, VALUE_BYTES
 from ..clients.redis_client import redis_client_for_node
 
@@ -36,11 +37,21 @@ def benchmark_cluster(
     for k in keys:
         p_node = sharding.get_node(k, op="write")
         write_buckets[p_node].append(k)
-        if hasattr(sharding, "_ensure_alternate"):
-            sharding._ensure_alternate(k)
+
+        if hasattr(sharding, "alt") and hasattr(sharding, "ch"):
+            ensure_alternate(
+                k,
+                sharding.alt,
+                sharding.nodes,
+                getattr(sharding.ch, "sorted_keys", []),
+                getattr(sharding.ch, "ring", {}),
+                getattr(sharding, "_h", hash),
+                p_node,
+            )
             a_node = sharding.alt.get(k)
             if a_node and a_node != p_node:
                 write_buckets[a_node].append(k)
+
         read_buckets[sharding.get_node(k, op="read")].append(k)
 
     node_load: Dict[str, int] = {
