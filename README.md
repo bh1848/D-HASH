@@ -2,70 +2,92 @@
 
 Dynamic Hot-key Aware Scalable Hashing
 
-A client-side routing layer designed to mitigate load imbalance caused by hot-keys.
-Built on top of Consistent Hashing with dynamic re-routing capabilities.
+Client-side routing layer for mitigating hot-key–induced load imbalance.
+Artifact repository for the accepted TIIS (SCIE) journal paper.
 
 ---
 
-## Paper Snapshot
+## Status
 
-The implementation used for the **TIIS 2026 (In Press)** paper is preserved as a git tag.
+Accepted at TIIS (SCIE).
+Publication pending.
+
+---
+
+## Quick Start
+
+### Requirements
+
+- Python >= 3.11
+- Docker
+- Docker Compose
+
+---
+
+### Install (Local Development)
 
 ```bash
-git checkout tiis-2026-inpress
-```
-
-The `main` branch contains the actively maintained engineering structure.
-Routing semantics defined in the paper are strictly preserved unless explicitly versioned.
-
----
-
-## Project Structure
-
-- `src/dhash/` — Core library (Routing and hashing implementation)
-- `src/dhash_repro/` — Experiment harness and reproduction workloads
-- `tests/` — Unit tests mirrored from `src/dhash`
-- `docs/` — Design, reproduction, and reference documentation
-- `Makefile` — Unified entry point for development and reproduction tasks
-
----
-
-## Installation
-
-All dependencies for both the core library and reproduction environment are managed via `pyproject.toml`. This ensures environment consistency without the need for fragmented `requirements.txt` files.
-
-```bash
-# Install core library and all development/reproduction dependencies
 make install
 ```
 
-*Note: This command installs the package in editable mode (`-e`) along with `pandas`, `numpy`, `redis`, and necessary dev tools.*
+This also installs pre-commit hooks.
 
 ---
 
-## Benchmark & Reproduction
+### Experiment Environment (Docker)
 
-You can execute the full suite of experiments using the unified CLI or the provided `Makefile`.
+Bring up the Redis-based reproduction environment:
 
 ```bash
-# Run all experimental stages (Pipeline sweep, Zipf analysis, etc.)
+make docker-up
+```
+
+Equivalent direct command:
+
+```bash
+docker-compose up --build
+```
+
+Stop and remove containers and volumes:
+
+```bash
+make docker-down
+```
+
+Equivalent direct command:
+
+```bash
+docker-compose down -v
+```
+
+---
+
+### Run Experiments
+
+```bash
 make repro
+```
 
-# Or use the CLI directly for specific configurations
-dhash-repro --mode zipf --repeats 10
+Equivalent CLI:
+
+```bash
+dhash-repro --mode all
+```
+
+CLI options:
+
+```bash
+dhash-repro --mode {all|pipeline|zipf|ablation} --alpha 1.5 --repeats 10
 ```
 
 ---
 
-## Development Workflow
+## Structure
 
-Maintain code quality and consistency using the following standardized commands:
-
-```bash
-make check   # Run formatter, linter, type-checker, and unit tests
-make test    # Run unit tests only
-make format  # Auto-format code using Ruff
-```
+- `src/dhash/` — Core hashing and routing logic
+- `src/dhash_repro/` — Experiment runner
+- `tests/` — Unit tests
+- `docs/` — Design and troubleshooting documentation
 
 ---
 
@@ -78,4 +100,4 @@ make format  # Auto-format code using Ruff
 
 ## License
 
-MIT License.
+MIT License

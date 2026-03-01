@@ -1,127 +1,38 @@
-# 03 Results Format
+# 03. Results Format
 
-Each benchmark run produces:
+This document describes experiment output structure.
 
-- JSON (full metadata and per-run details)
-- CSV (aggregated summary across repeats)
-
----
-
-## CSV Columns
-
-The CSV file contains one row per:
-
-- algorithm
-- workload configuration
-- pipeline size
-
-### Workload Metadata
-
-- run_id
-- kind
-- name
-- alpha
-- num_ops
-- num_keys
-- read_ratio
-- pipeline
-- seed
-- threshold
-- window
-- nodes
-- repeats
-
-### Latency Metrics (ns)
-
-- avg_latency_ns_mean
-- p50_latency_ns_mean
-- p95_latency_ns_mean
-- p99_latency_ns_mean
-
-These values are computed from weighted percentiles.
-Weights correspond to the number of operations per pipeline batch.
-
-### Load Distribution Metrics
-
-- load_mean_mean
-- load_stddev_mean
-- load_max_mean
-- load_min_mean
-
-Load is measured as the number of operations routed to each physical node.
-
-For `num_ops = 200000` and `nodes = 5`,
-`load_mean_mean` equals `40000`.
+Result generation is handled by the reproduction layer.
 
 ---
 
-## Interpretation Notes
+## Output Scope
 
-### 1. Latency Scope
+Results may include:
 
-Latency values reflect routing-layer execution under pipelined execution.
+- Per-node request distribution
+- Routing decision statistics
+- Aggregated imbalance indicators
 
-They primarily capture:
-
-- Routing decision cost
-- Python execution overhead
-- Batch-level measurement aggregation
-
-They do not represent full network-level or cross-service latency unless Redis I/O is explicitly included in the measurement configuration.
+The exact format is defined by the persistence module
+within `src/dhash_repro/`.
 
 ---
 
-### 2. Weighted Percentile
+## Separation from Core
 
-In pipelined workloads, a single latency sample may represent multiple operations.
+The reproduction layer:
 
-Percentile calculation uses:
+- Executes experiments
+- Collects benchmark-level metrics
+- Persists result data
 
-```python
-def _weighted_percentile(samples, q):
-    samples_sorted = sorted(samples, key=lambda x: x[0])
-    total_w = sum(w for _, w in samples_sorted)
-    target = q * total_w
-```
+It does not modify:
 
-Each sample is weighted by the number of operations in that batch.
+- Hashing logic
+- Guard logic
+- Alternate selection
+- Window behavior
+- Runtime statistics implementation
 
-This preserves operation-level interpretation rather than batch-level interpretation.
-
----
-
-### 3. Load Imbalance Metric
-
-`load_stddev_mean` represents the standard deviation of request counts across physical nodes.
-
-Lower values indicate a more even distribution of routed operations.
-
-The metric does not imply system-wide performance improvement.
-It reflects distribution characteristics under the evaluated workload.
-
----
-
-### 4. Pipeline Parameter
-
-The `pipeline` parameter changes batch size but does not alter routing semantics.
-
-Load distribution metrics are expected to remain identical across pipeline values,
-while latency metrics may vary due to batching effects.
-
----
-
-### 5. Weighted CH (WCH)
-
-When all node weights are identical, Weighted Consistent Hashing produces the same distribution as standard Consistent Hashing.
-
-Differences appear only when heterogeneous node weights are applied.
-
----
-
-## Reproducibility
-
-To regenerate results:
-
-```bash
-python -m benchmarks.runner --algo all --repeats 3
-```
+Core routing behavior remains unchanged during benchmarking.

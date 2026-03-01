@@ -1,23 +1,74 @@
-# 02 Hashing
+# 02. Hashing
 
-D-HASH builds on a standard Consistent Hashing ring.
+## Role
 
-Components:
+The hashing layer provides deterministic key-to-node mapping.
 
-- Virtual replicas per physical node
-- 64-bit hash (xxHash64)
-- Sorted ring lookup via bisect
+It resolves the primary node for a given key.
+No routing condition or runtime traffic state influences this step.
 
-Primary resolution:
+---
 
-- For key k, compute h(k)
-- Find first clockwise virtual node
-- Map to physical node
+## Location
 
-Alternate selection uses:
+Implementation:
 
-- Auxiliary hash h(k | "alt")
-- Stride s(k) in range [1, |N|-1]
-- s(k)-th successor on the ring
+`src/dhash/hashing/`
 
-This preserves determinism and avoids self-selection.
+This module contains:
+
+- Consistent hashing
+- Weighted consistent hashing
+- Rendezvous hashing
+- `fast_hash64` utility
+
+Each strategy maps a key to a single primary node.
+
+---
+
+## Primary Resolution
+
+For a request key:
+
+1. The key is converted into a 64-bit hash value.
+2. The hash value is used by the selected hashing strategy.
+3. A primary node is deterministically selected.
+
+The result depends only on:
+
+- Node membership
+- Replica configuration
+- Hash function
+
+Given identical configuration,
+the same key resolves to the same primary node.
+
+---
+
+## Virtual Nodes
+
+Ring-based hashing strategies use virtual nodes.
+
+Each physical node may correspond to multiple positions
+depending on replica configuration.
+
+Primary selection operates on the virtual ring
+but resolves to a physical node.
+
+This distinction becomes relevant during alternate selection.
+
+---
+
+## Boundary with Routing
+
+Hashing:
+
+- Computes primary node
+- Does not evaluate hot-key status
+- Does not apply guard logic
+- Does not select alternates
+- Does not maintain runtime statistics
+
+Routing logic executes after primary resolution.
+
+Hashing remains the baseline mapping layer.

@@ -6,7 +6,7 @@ Dynamic Hot-key Aware Client-side Routing for Distributed Cache Systems
 
 ## 개요
 
-Zipf 분포 환경에서는 일부 키가 전체 요청의 상당 부분을 차지한다.  
+Zipf 분포 환경에서는 일부 키가 전체 요청의 상당 부분을 차지한다.
 Consistent Hashing은 키-노드 매핑의 안정성은 제공하지만, 특정 키에 집중되는 read 부하를 직접 제어하지는 않는다.
 
 D-HASH는 서버 구조 변경 없이, 클라이언트 측에서 핫키를 판정하고 read 경로를 제어하는 방식으로 구현되었다.
@@ -26,7 +26,7 @@ Alternate의 준비와 read 경로 전환은 독립적으로 동작한다.
 
 가상노드 기반 Consistent Hashing 링에서는 슬롯 이동이 곧 물리 노드 변경을 의미하지 않는다.
 
-Alternate는 물리 노드 기준으로 `cand != primary` 조건을 만족하는 경우에만 확정된다.  
+Alternate는 물리 노드 기준으로 `cand != primary` 조건을 만족하는 경우에만 확정된다.
 후보 판정은 슬롯 위치가 아니라 node id 기준으로 수행된다.
 
 다음 순서를 따른다.
@@ -113,14 +113,14 @@ target = q * total_w
 
 ## 트러블슈팅 기록
 
-- [Alternate Selection](troubleshooting/01_alternate_selection.md)
-- [Guard Phase](troubleshooting/02_guard_phase.md)
-- [Routing Window](troubleshooting/03_routing_window.md)
+- [Alternate Selection](troubleshooting/01_alternate.md)
+- [Guard Phase](troubleshooting/02_guard.md)
+- [Routing Window](troubleshooting/03_window.md)
 - [Weighted Percentile](troubleshooting/04_weighted_percentile.md)
 
 ---
 
 ## 논문 정보
 
-**D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems**  
+**D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems**
 TIIS (SCIE), 2026 (In Press)
