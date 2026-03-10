@@ -8,7 +8,7 @@ except ImportError as e:
         "The 'xxhash' package is required. Install it via: pip install xxhash"
     ) from e
 
-from ..config import REPLICAS
+from ..config import VIRTUAL_POINTS_PER_NODE
 
 
 def fast_hash64(key: Any) -> int:
@@ -16,7 +16,7 @@ def fast_hash64(key: Any) -> int:
 
 
 class ConsistentHashing:
-    def __init__(self, nodes: List[str], replicas: int = REPLICAS) -> None:
+    def __init__(self, nodes: List[str], replicas: int = VIRTUAL_POINTS_PER_NODE) -> None:
         self.replicas = replicas
         self.ring: Dict[int, str] = {}
         self.sorted_keys: List[int] = []
@@ -47,7 +47,7 @@ class WeightedConsistentHashing:
         self,
         nodes: List[str],
         weights: Optional[Dict[str, float]] = None,
-        base_replicas: int = REPLICAS,
+        base_replicas: int = VIRTUAL_POINTS_PER_NODE,
     ) -> None:
         self.base_replicas = base_replicas
         self.weights = weights or {n: 1.0 for n in nodes}

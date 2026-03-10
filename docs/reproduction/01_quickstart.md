@@ -1,71 +1,76 @@
-# 01. Quickstart
+# Quickstart
 
-This document describes how to execute experiments.
+## Overview
 
-The reproduction layer is implemented under:
+This document shows the shortest way to run the D-HASH benchmark environment.
 
-`src/dhash_repro/`
+The current project is designed to run through Docker.
 
 ---
 
-## Requirements
+## Prerequisites
 
-- Python >= 3.11
+Make sure the following tools are installed:
+
 - Docker
 - Docker Compose
 
----
-
-## Environment Setup
-
-Start the Redis-based experiment environment:
-
-```bash
-make docker-up
-```
-
-Equivalent:
-
-```bash
-docker-compose up --build
-```
+No separate local CLI entry point is required for the normal benchmark flow.
 
 ---
 
-## Install Dependencies
+## Run
+
+Start the runner and Redis nodes with:
 
 ```bash
-make install
+docker compose up --build runner
 ```
 
-Installs the core package and development dependencies.
+This command builds the runner image, starts the required Redis containers, and runs the selected experiment mode.
 
 ---
 
-## Run Experiments
+## Stop
 
-Run all experiment modes:
-
-```bash
-make repro
-```
-
-Equivalent:
+Stop the containers and remove volumes with:
 
 ```bash
-dhash-repro --mode all
+docker compose down -v
 ```
+
+This resets the local benchmark environment.
 
 ---
 
-## Shutdown Environment
+## Runtime Variables
 
-```bash
-make docker-down
-```
+The main runtime variables are:
 
-Equivalent:
+- `DHASH_MODE`
+- `DHASH_ALPHA`
+- `DHASH_REPEATS`
+- `DHASH_DATASET`
 
-```bash
-docker-compose down -v
-```
+These are usually set in `docker-compose.yml`.
+
+---
+
+## What Happens During Execution
+
+The runner does the following:
+
+1. loads the selected dataset or synthetic workload
+2. builds the selected routing strategy
+3. sends requests to Redis nodes
+4. writes benchmark output files
+
+---
+
+## Next
+
+For more detail, continue with:
+
+- [02 Datasets](02_datasets.md)
+- [03 Benchmark](03_benchmark.md)
+- [04 Results Format](04_results_format.md)

@@ -20,23 +20,20 @@ def ensure_alternate(
 
     hk = hash_fn(key)
     i = bisect(ring_keys, hk) % len(ring_keys)
-    stride_span = max(1, len(nodes) - 1)
-    stride = 1 + (hash_fn(f"{key}|alt") % stride_span)
+    stride = 1 + (hash_fn(f"{key}|alt") % (len(nodes) - 1))
 
+    seen = set()
+    ordered = []
     j = i
-    for _ in range(len(ring_keys)):
-        j = (j + stride) % len(ring_keys)
-        cand = ring_map[ring_keys[j]]
-        if cand != primary:
-            alt_dict[key] = cand
-            return
 
-    j = i
     for _ in range(len(ring_keys)):
         j = (j + 1) % len(ring_keys)
         cand = ring_map[ring_keys[j]]
-        if cand != primary:
-            alt_dict[key] = cand
-            return
+        if cand == primary or cand in seen:
+            continue
+        seen.add(cand)
+        ordered.append(cand)
+        if len(ordered) == len(nodes) - 1:
+            break
 
-    alt_dict[key] = primary
+    alt_dict[key] = ordered[stride - 1] if len(ordered) >= stride else primary

@@ -1,73 +1,128 @@
 # Glossary
 
-This document defines structural terms used in D-HASH.
+## Overview
 
-Definitions describe responsibility boundaries only.
+This document defines the main terms used in the D-HASH repository.
 
----
-
-## Primary
-
-The node returned by the hashing layer for a given key.
-
-Resolved before any routing adjustment.
+The definitions here follow the current implementation, not a broader distributed systems textbook.
 
 ---
 
-## Alternate
+## Terms
 
-A node selected by the alternate module
-when guard eligibility is satisfied.
+### D-HASH
 
-Alternate selection does not modify hashing state.
+A routing rule built on top of Consistent Hashing.
 
----
-
-## Guard
-
-A routing component that evaluates
-whether alternate routing is allowed.
-
-Produces an eligibility decision.
+In this repository, D-HASH changes read routing for hot keys after a fixed threshold is reached.
 
 ---
 
-## Window
+### Consistent Hashing
 
-A routing mechanism that maintains
-per-key temporal routing state.
+A hash-based routing method that maps keys to nodes on a ring.
 
-Controls reuse of previously selected alternates.
-
----
-
-## Virtual Node
-
-A logical ring position associated
-with a physical node in ring-based hashing.
-
-Multiple virtual nodes may map
-to one physical node.
+In this repository, it is the base routing structure for D-HASH and one of the benchmark baselines.
 
 ---
 
-## Physical Node
+### Weighted Consistent Hashing
 
-The actual routing target returned by the router.
+A weighted variant of hash-based routing.
 
----
-
-## Runtime Statistics
-
-Per-key access state maintained by `stats`.
-
-Used by guard logic during eligibility evaluation.
+It is implemented as a comparison baseline in the experiment layer.
 
 ---
 
-## Reproduction Layer
+### Rendezvous Hashing
 
-The experiment execution layer
-implemented under `src/dhash_repro/`.
+A hash-based routing method that selects the highest-scoring node for a key.
 
-Separate from the core routing path.
+It is also implemented as a comparison baseline in the experiment layer.
+
+---
+
+### Primary Node
+
+The default node chosen for a key by the base hash strategy.
+
+Writes always go to the primary node in the current D-HASH implementation.
+
+---
+
+### Alternate Node
+
+A second node assigned to a hot key after the threshold is reached.
+
+In this repository, the alternate is selected deterministically from the ring order.
+
+---
+
+### Hot Key
+
+A key whose read count has reached or passed the configured threshold `T`.
+
+Hot keys are eligible for alternate read routing.
+
+---
+
+### Threshold (`T`)
+
+The per-key read count required before alternate routing is considered.
+
+If a key stays below this threshold, reads continue to use the primary node only.
+
+---
+
+### Guard Phase
+
+A fixed period after the threshold where reads still go to the primary node.
+
+This is implemented before the alternating window rule begins.
+
+---
+
+### Window (`W`)
+
+The fixed count-based window size used after the guard phase.
+
+Reads switch between the primary node and the alternate node in windows of size `W`.
+
+---
+
+### Read Count
+
+The per-key counter used by D-HASH to decide whether the threshold and window rules apply.
+
+This is count-based state, not measured node load.
+
+---
+
+### Dataset
+
+The source workload used by the experiment runner.
+
+The current dataset names are:
+
+- `nasa`
+- `ebay`
+
+---
+
+### Benchmark Runner
+
+The code in `dhash_repro` that loads workloads, runs experiments, and writes output files.
+
+---
+
+### Reproduction
+
+Running the implemented benchmark flow again under the same repository setup.
+
+In this project, reproduction means running the same code path with the same modes and comparable inputs.
+
+---
+
+## Scope
+
+This glossary only covers terms used directly in the repository and its documentation.

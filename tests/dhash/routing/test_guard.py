@@ -1,9 +1,10 @@
 import pytest
+
 from dhash.routing.guard import check_guard_phase
 
 
 @pytest.mark.parametrize(
-    "cnt, threshold, window, expected",
+    ("cnt", "threshold", "window_size", "expected"),
     [
         (49, 50, 10, True),
         (50, 50, 10, True),
@@ -13,7 +14,9 @@ from dhash.routing.guard import check_guard_phase
     ],
 )
 def test_check_guard_phase_boundaries(
-    cnt: int, threshold: int, window: int, expected: bool
+    cnt: int,
+    threshold: int,
+    window_size: int,
+    expected: bool,
 ) -> None:
-    """Verify that the guard phase correctly delays routing transitions."""
-    assert check_guard_phase(cnt, threshold, window) is expected
+    assert check_guard_phase(cnt, threshold, window_size) is expected

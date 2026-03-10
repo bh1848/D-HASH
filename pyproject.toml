@@ -28,9 +28,6 @@ dev = [
     "pre-commit>=3.5"
 ]
 
-[project.scripts]
-dhash-repro = "dhash_repro.cli:main"
-
 [tool.setuptools.packages.find]
 where = ["src"]
 

@@ -6,8 +6,9 @@ from statistics import stdev
 from typing import Any, Dict, List, Tuple
 
 from dhash.stats import weighted_percentile
-from ..config.defaults import NODES, PIPELINE_SIZE_DEFAULT, TTL_SECONDS, VALUE_BYTES
+
 from ..clients.redis_client import redis_client_for_node
+from ..config.defaults import NODES, PIPELINE_SIZE_DEFAULT, TTL_SECONDS, VALUE_BYTES
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +38,6 @@ def benchmark_cluster(
     for k in keys:
         p_node = sharding.get_node(k, op="write")
         write_buckets[p_node].append(k)
-        if hasattr(sharding, "alt"):
-            a_node = sharding.alt.get(k)
-            if a_node and a_node != p_node:
-                write_buckets[a_node].append(k)
         read_buckets[sharding.get_node(k, op="read")].append(k)
 
     node_load: Dict[str, int] = {

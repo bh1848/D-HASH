@@ -64,7 +64,11 @@ services:
     container_name: runner
     working_dir: /workspace
     environment:
-      - PYTHONHASHSEED=123
+      PYTHONHASHSEED: "123"
+      PYTHONPATH: "/workspace/src"
+      DHASH_MODE: "all"
+      DHASH_ALPHA: "1.5"
+      DHASH_REPEATS: "1"
     volumes:
       - .:/workspace
     networks: [redis-cluster]
@@ -79,7 +83,7 @@ services:
         condition: service_healthy
       redis-5:
         condition: service_healthy
-    command: ["dhash-repro", "--mode", "all"]
+    command: ["python", "-m", "dhash_repro"]
 
 networks:
   redis-cluster:

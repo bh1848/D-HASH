@@ -1,102 +1,58 @@
 # D-HASH
 
-Dynamic Hot-key Aware Scalable Hashing
+D-HASH is a routing strategy for reducing load imbalance in distributed cache systems.
 
-Client-side routing layer for mitigating hot-key–induced load imbalance.
-Artifact repository for the accepted TIIS (SCIE) journal paper.
-
----
-
-## Status
-
-Accepted at TIIS (SCIE).
-Publication pending.
-
----
+This repository reproduces the D-HASH routing behavior with Redis-based experiments and a modular backend-style architecture.
 
 ## Quick Start
 
-### Requirements
+Run the experiment environment with Docker:
 
-- Python >= 3.11
-- Docker
-- Docker Compose
+~~~bash
+docker compose up --build runner
+~~~
 
----
+Stop and remove containers:
 
-### Install (Local Development)
-
-```bash
-make install
-```
-
-This also installs pre-commit hooks.
-
----
-
-### Experiment Environment (Docker)
-
-Bring up the Redis-based reproduction environment:
-
-```bash
-make docker-up
-```
-
-Equivalent direct command:
-
-```bash
-docker-compose up --build
-```
-
-Stop and remove containers and volumes:
-
-```bash
-make docker-down
-```
-
-Equivalent direct command:
-
-```bash
-docker-compose down -v
-```
-
----
-
-### Run Experiments
-
-```bash
-make repro
-```
-
-Equivalent CLI:
-
-```bash
-dhash-repro --mode all
-```
-
-CLI options:
-
-```bash
-dhash-repro --mode {all|pipeline|zipf|ablation} --alpha 1.5 --repeats 10
-```
-
----
-
-## Structure
-
-- `src/dhash/` — Core hashing and routing logic
-- `src/dhash_repro/` — Experiment runner
-- `tests/` — Unit tests
-- `docs/` — Design and troubleshooting documentation
-
----
+~~~bash
+docker compose down -v
+~~~
 
 ## Documentation
 
-- [English Documentation](docs/README.md)
-- [Korean Documentation](docs/README_kr.md)
+- [Project Documentation](docs/README.md)
+- [Architecture](docs/architecture.md)
+- [Algorithm](docs/algorithm.md)
+- [Experiments](docs/experiments.md)
+- [Paper Alignment](docs/paper_alignment.md)
 
----
+## Repository Structure
+
+~~~text
+src/
+  dhash/
+    hashing/
+    routing/
+    config.py
+    stats.py
+
+  dhash_repro/
+    experiment.py
+    benchmark/
+    clients/
+    config/
+    persistence/
+    workloads/
+~~~
+
+## Overview
+
+The repository is organized into two layers:
+
+- **`dhash`**: core routing library
+- **`dhash_repro`**: experiment runner
+
+This separation keeps the routing logic small and keeps benchmark code outside the core routing layer.
 
 ## License
 

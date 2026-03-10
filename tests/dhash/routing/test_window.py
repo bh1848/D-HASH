@@ -1,9 +1,10 @@
 import pytest
+
 from dhash.routing.window import select_window_route
 
 
 @pytest.mark.parametrize(
-    "cnt, threshold, window, expected_node",
+    ("cnt", "threshold", "window_size", "expected_node"),
     [
         (60, 50, 10, "A"),
         (69, 50, 10, "A"),
@@ -13,7 +14,9 @@ from dhash.routing.window import select_window_route
     ],
 )
 def test_select_window_route_oscillation(
-    cnt: int, threshold: int, window: int, expected_node: str
+    cnt: int,
+    threshold: int,
+    window_size: int,
+    expected_node: str,
 ) -> None:
-    """Verify that routing oscillates between Primary and Alternate every W requests."""
-    assert select_window_route(cnt, threshold, window, "P", "A") == expected_node
+    assert select_window_route(cnt, threshold, window_size, "P", "A") == expected_node
