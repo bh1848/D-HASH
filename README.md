@@ -8,15 +8,15 @@ This repository reproduces the D-HASH routing behavior with Redis-based experime
 
 Run the experiment environment with Docker:
 
-~~~bash
+```bash
 docker compose up --build runner
-~~~
+```
 
 Stop and remove containers:
 
-~~~bash
+```bash
 docker compose down -v
-~~~
+```
 
 ## Documentation
 
@@ -28,7 +28,7 @@ docker compose down -v
 
 ## Repository Structure
 
-~~~text
+```text
 src/
   dhash/
     hashing/
@@ -37,13 +37,14 @@ src/
     stats.py
 
   dhash_repro/
+    __main__.py
     experiment.py
     benchmark/
     clients/
     config/
     persistence/
     workloads/
-~~~
+```
 
 ## Overview
 
