@@ -2,13 +2,6 @@
 
 This directory contains the main project documents for D-HASH.
 
-The documents are grouped by purpose:
-
-- core project documents
-- reproduction documents
-- reference documents
-- troubleshooting notes
-
 ---
 
 ## Core Documents
@@ -16,10 +9,8 @@ The documents are grouped by purpose:
 - [Architecture](architecture.md)
 - [Algorithm](algorithm.md)
 - [Experiments](experiments.md)
-- [Paper Alignment](paper_alignment.md)
 
-These files describe the implementation at the level of structure, routing behavior, experiment design, and alignment
-with the paper.
+These files describe the implementation at the level of structure, routing behavior and experiment design.
 
 ---
 

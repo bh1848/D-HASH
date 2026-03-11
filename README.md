@@ -1,6 +1,6 @@
 # D-HASH: Dynamic Hot-key Aware Scalable Hashing for Load Balancing in Distributed Cache Systems
 
-Official implementation of D-HASH.  
+Official implementation of D-HASH.
 Accepted in KSII Transactions on Internet and Information Systems (TIIS, SCIE), 2026.
 
 D-HASH is a routing strategy for reducing load imbalance in distributed cache systems.
@@ -27,7 +27,6 @@ docker compose down -v
 - [Architecture](docs/architecture.md)
 - [Algorithm](docs/algorithm.md)
 - [Experiments](docs/experiments.md)
-- [Paper Alignment](docs/paper_alignment.md)
 
 ## Repository Structure
 
