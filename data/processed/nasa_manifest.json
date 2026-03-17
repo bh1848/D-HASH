@@ -1,0 +1,8 @@
+{
+  "dataset": "nasa",
+  "input": "src/dhash_repro/data/raw/nasa_http_logs.zip",
+  "output": "src/dhash_repro/data/processed/nasa_trace.txt",
+  "valid_rows": 1567965,
+  "unique_keys": 15342,
+  "sha256": "df4d0a9700b5e03da7376790b14b9b5a386ff9f60c8e9a0eb9f09d4554404680"
+}

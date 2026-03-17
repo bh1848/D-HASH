@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Tuple
 
 from dhash.stats import weighted_percentile
 
+from ..typing import Sharding
 from ..clients.redis_client import redis_client_for_node
 from ..config.defaults import NODES, PIPELINE_SIZE_DEFAULT, TTL_SECONDS, VALUE_BYTES
 
@@ -27,7 +28,7 @@ def _value_payload(value_bytes: int) -> bytes:
 
 def benchmark_cluster(
     keys: List[Any],
-    sharding: Any,
+    sharding: Sharding,
     ex_seconds: int = TTL_SECONDS,
     pipeline_size: int = PIPELINE_SIZE_DEFAULT,
     value_bytes: int = VALUE_BYTES,

@@ -5,29 +5,11 @@ import re
 import zipfile
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Tuple
 
-from dhash import ConsistentHashing, DHash, RendezvousHashing, WeightedConsistentHashing
-from dhash.config import VIRTUAL_POINTS_PER_NODE
-from .benchmark.collectors import benchmark_cluster, load_stddev
-from .clients.redis_client import flush_databases, preload_cluster, warmup_cluster
-from .config.defaults import (
-    ABLAT_THRESHOLDS,
-    DATASET_DEFAULTS,
-    DEFAULT_DATASET,
-    NODES,
-    PIPELINE_SWEEP,
-    SEED,
-    ZIPF_ALPHAS,
-    reset_np_rng,
-    runtime_env_metadata,
-)
-from .persistence.writer import save_to_csv
-from .workloads.zipf import generate_zipf_workload
+from dhash_repro.config.defaults import DATASET_DEFAULTS, DEFAULT_DATASET
 
 logger = logging.getLogger(__name__)
-
-ALL_MODES: Tuple[str, ...] = ("Consistent Hashing", "Weighted CH", "Rendezvous", "D-HASH")
 
 _CLF_RE = re.compile(
     r"^(?P<host>\S+) \S+ \S+ \[(?P<time>.*?)\] "
@@ -36,15 +18,7 @@ _CLF_RE = re.compile(
 )
 
 
-def resolve_algorithms(stage: str, algos: str) -> List[str]:
-    if stage in ("microbench", "pipeline"):
-        return ["Consistent Hashing", "D-HASH"]
-    if stage == "ablation":
-        return ["D-HASH"]
-    return list(ALL_MODES)
-
-
-def _resolve_dataset() -> str:
+def resolve_dataset() -> str:
     dataset = os.getenv("DHASH_DATASET", DEFAULT_DATASET).strip().lower()
     if dataset not in DATASET_DEFAULTS:
         raise ValueError(
@@ -62,11 +36,11 @@ def _raw_env_var(dataset: str) -> str:
 
 
 def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _package_data_root() -> Path:
-    return Path(__file__).resolve().parent / "data"
+    return Path(__file__).resolve().parents[1] / "data"
 
 
 def _data_roots() -> List[Path]:
@@ -115,7 +89,6 @@ def _candidate_paths(dataset: str) -> List[Path]:
                 ]
             )
 
-    # cwd fallback for convenience
     cwd = Path.cwd()
     if dataset == "nasa":
         candidates.extend(
@@ -242,17 +215,15 @@ def _load_ranked_keys_from_ebay_raw(
     return ranked_keys, total_requests
 
 
-def _load_dataset_workload_base(dataset: str) -> Tuple[List[str], int]:
+def load_dataset_workload_base(dataset: str) -> Tuple[List[str], int]:
     trace_env = _trace_env_var(dataset)
     raw_env = _raw_env_var(dataset)
 
-    # 1) explicit TRACE env first
     trace_path = os.getenv(trace_env, "").strip()
     if trace_path:
         logger.info("[%s] Loading processed trace from %s", dataset, trace_path)
         return _load_ranked_keys_from_trace(trace_path)
 
-    # 2) automatic search
     for candidate in _candidate_paths(dataset):
         if not candidate.exists():
             continue
@@ -280,169 +251,3 @@ def _load_dataset_workload_base(dataset: str) -> Tuple[List[str], int]:
         f"Use {trace_env} for a processed trace, or {raw_env} for a raw dataset. "
         f"Searched under: {[str(root) for root in _data_roots()]}"
     )
-
-
-def run_single_mode(
-    keys: List[Any],
-    mode_name: str,
-    pipeline_size: int,
-    dhash_params: Optional[Dict[str, int]] = None,
-    preload_keys: Optional[List[Any]] = None,
-) -> Tuple[float, float, float, float, float]:
-    sh: Any
-
-    if mode_name == "Consistent Hashing":
-        sh = ConsistentHashing(NODES, replicas=VIRTUAL_POINTS_PER_NODE)
-    elif mode_name == "Weighted CH":
-        sh = WeightedConsistentHashing(
-            NODES,
-            {n: 1.0 + 0.1 * i for i, n in enumerate(NODES)},
-            base_replicas=VIRTUAL_POINTS_PER_NODE,
-        )
-    elif mode_name == "Rendezvous":
-        sh = RendezvousHashing(NODES)
-    elif mode_name == "D-HASH":
-        params = dhash_params or {"T": 300, "W": pipeline_size}
-        sh = DHash(NODES, hot_key_threshold=int(params["T"]), window_size=int(params["W"]))
-    else:
-        raise ValueError(f"Unknown mode: {mode_name}")
-
-    warm_keys = preload_keys if preload_keys is not None else list(dict.fromkeys(keys))
-
-    flush_databases(NODES, flush_async=False)
-
-    preload_cluster(sh, warm_keys)
-    warmup_cluster(sh, warm_keys)
-
-    metrics = benchmark_cluster(keys, sh, pipeline_size=pipeline_size)
-
-    thr = float(metrics["throughput_ops_s"])
-    avg = float(metrics["avg_ms"])
-    p95 = float(metrics["p95_ms"])
-    p99 = float(metrics["p99_ms"])
-    sd = load_stddev(metrics["node_load"])
-
-    logger.info(
-        "    -> %s (B=%d): Thr=%.1f, P99=%.3fms, LoadSD=%.0f",
-        mode_name,
-        pipeline_size,
-        thr,
-        p99,
-        sd,
-    )
-    return thr, avg, p95, p99, sd
-
-
-def run_experiments(mode: str, alpha: float, repeats: int) -> None:
-    os.makedirs("persistence", exist_ok=True)
-
-    dataset = _resolve_dataset()
-    cfg = DATASET_DEFAULTS[dataset]
-    ranked_keys, trace_size = _load_dataset_workload_base(dataset)
-
-    optimal_B = int(cfg["B"])
-    optimal_W = int(cfg["W"])
-    optimal_T = int(cfg["T"])
-    sweep_rho = float(cfg["rho"])
-
-    if mode in ("pipeline", "all"):
-        results: List[Dict[str, Any]] = []
-        for B in PIPELINE_SWEEP:
-            for rep in range(repeats):
-                reset_np_rng(SEED + rep)
-                kz = generate_zipf_workload(ranked_keys, size=trace_size, alpha=alpha)
-                for m in resolve_algorithms("pipeline", "auto"):
-                    d_p = (
-                        {"T": max(30, int(round(sweep_rho * B))), "W": B} if m == "D-HASH" else None
-                    )
-                    t, avg, p95, p99, s = run_single_mode(
-                        kz,
-                        m,
-                        B,
-                        d_p,
-                        preload_keys=ranked_keys,
-                    )
-                    results.append(
-                        {
-                            "Dataset": dataset,
-                            "Mode": m,
-                            "Alpha": alpha,
-                            "Pipeline": B,
-                            "W": B if m == "D-HASH" else None,
-                            "T": d_p["T"] if d_p else None,
-                            "Thr": t,
-                            "Avg": avg,
-                            "P95": p95,
-                            "P99": p99,
-                            "LoadSD": s,
-                        }
-                    )
-        save_to_csv(results, f"persistence/{dataset}_pipeline_sweep.csv")
-
-    if mode in ("zipf", "all"):
-        results = []
-        for a in ZIPF_ALPHAS:
-            for rep in range(repeats):
-                reset_np_rng(SEED + rep)
-                kz = generate_zipf_workload(ranked_keys, size=trace_size, alpha=a)
-                for m in resolve_algorithms("zipf", "auto"):
-                    d_p = {"T": optimal_T, "W": optimal_W} if m == "D-HASH" else None
-                    t, avg, p95, p99, s = run_single_mode(
-                        kz,
-                        m,
-                        optimal_B,
-                        d_p,
-                        preload_keys=ranked_keys,
-                    )
-                    results.append(
-                        {
-                            "Dataset": dataset,
-                            "Mode": m,
-                            "Alpha": a,
-                            "Pipeline": optimal_B,
-                            "W": optimal_W if m == "D-HASH" else None,
-                            "T": optimal_T if m == "D-HASH" else None,
-                            "Thr": t,
-                            "Avg": avg,
-                            "P95": p95,
-                            "P99": p99,
-                            "LoadSD": s,
-                        }
-                    )
-        save_to_csv(results, f"persistence/{dataset}_zipf_results.csv")
-
-    if mode in ("ablation", "all"):
-        results = []
-        for T in ABLAT_THRESHOLDS:
-            for rep in range(repeats):
-                reset_np_rng(SEED + rep)
-                kz = generate_zipf_workload(ranked_keys, size=trace_size, alpha=alpha)
-                t, avg, p95, p99, s = run_single_mode(
-                    kz,
-                    "D-HASH",
-                    optimal_B,
-                    {"T": T, "W": optimal_W},
-                    preload_keys=ranked_keys,
-                )
-                results.append(
-                    {
-                        "Dataset": dataset,
-                        "Alpha": alpha,
-                        "Pipeline": optimal_B,
-                        "W": optimal_W,
-                        "T": T,
-                        "Thr": t,
-                        "Avg": avg,
-                        "P95": p95,
-                        "P99": p99,
-                        "LoadSD": s,
-                    }
-                )
-        save_to_csv(results, f"persistence/{dataset}_threshold_ablation.csv")
-
-    env_row = runtime_env_metadata(repeats)
-    env_row.update(
-        {"dataset": dataset, "trace_requests": trace_size, "unique_keys": len(ranked_keys)}
-    )
-    save_to_csv([env_row], f"persistence/{dataset}_env_metadata.csv")
-    logger.info("All experiments finished for dataset=%s.", dataset)

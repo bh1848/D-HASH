@@ -36,7 +36,7 @@ logs/
 
 # Data (datasets should not be committed)
 data/raw/*
-data/processed/*
+data/processed/*.txt
 
 # Keep folder structure
 !data/raw/.gitkeep

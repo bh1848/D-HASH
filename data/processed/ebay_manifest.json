@@ -1,0 +1,9 @@
+{
+  "dataset": "ebay",
+  "input": "src/dhash_repro/data/raw/ebay_auction_logs.zip",
+  "output": "src/dhash_repro/data/processed/ebay_trace.txt",
+  "column": "auctionid",
+  "valid_rows": 10681,
+  "unique_keys": 628,
+  "sha256": "c0d242c09a76d3b27aee2573a2242f14ffa79ba3d84701c0e7205039a5f585ba"
+}

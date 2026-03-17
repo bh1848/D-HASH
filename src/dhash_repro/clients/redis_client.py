@@ -10,6 +10,7 @@ from redis import ConnectionPool, Redis
 from dhash.routing.alternate import ensure_alternate
 
 from ..config.defaults import SEED, TTL_SECONDS
+from ..typing import Sharding
 
 logger = logging.getLogger(__name__)
 _connection_pools: Dict[str, ConnectionPool] = {}
@@ -35,7 +36,7 @@ def _unique_keys(keys: Iterable[Any]) -> List[Any]:
     return list(dict.fromkeys(keys))
 
 
-def preload_cluster(sharding: Any, keys: List[Any], ttl_seconds: int = TTL_SECONDS) -> None:
+def preload_cluster(sharding: Sharding, keys: List[Any], ttl_seconds: int = TTL_SECONDS) -> None:
     unique_keys = _unique_keys(keys)
     write_buckets: Dict[str, List[Any]] = defaultdict(list)
 
@@ -44,16 +45,17 @@ def preload_cluster(sharding: Any, keys: List[Any], ttl_seconds: int = TTL_SECON
         write_buckets[p_node].append(k)
 
         if hasattr(sharding, "alt") and hasattr(sharding, "ch"):
+            rich_sharding = cast(Any, sharding)
             ensure_alternate(
                 k,
-                sharding.alt,
-                sharding.nodes,
-                getattr(sharding.ch, "sorted_keys", []),
-                getattr(sharding.ch, "ring", {}),
-                getattr(sharding, "_h", hash),
+                rich_sharding.alt,
+                rich_sharding.nodes,
+                getattr(rich_sharding.ch, "sorted_keys", []),
+                getattr(rich_sharding.ch, "ring", {}),
+                getattr(rich_sharding, "_h", hash),
                 p_node,
             )
-            a_node = cast(Dict[Any, str], sharding.alt).get(k)
+            a_node = cast(Dict[Any, str], rich_sharding.alt).get(k)
             if a_node and a_node != p_node:
                 write_buckets[a_node].append(k)
 
@@ -74,7 +76,7 @@ def preload_cluster(sharding: Any, keys: List[Any], ttl_seconds: int = TTL_SECON
 
 
 def warmup_cluster(
-    sharding: Any,
+    sharding: Sharding,
     keys: List[Any],
     *,
     sample_size: int = 1000,
@@ -103,16 +105,17 @@ def warmup_cluster(
         write_buckets[p_node].append(k)
 
         if hasattr(sharding, "alt") and hasattr(sharding, "ch"):
+            rich_sharding = cast(Any, sharding)
             ensure_alternate(
                 k,
-                sharding.alt,
-                sharding.nodes,
-                getattr(sharding.ch, "sorted_keys", []),
-                getattr(sharding.ch, "ring", {}),
-                getattr(sharding, "_h", hash),
+                rich_sharding.alt,
+                rich_sharding.nodes,
+                getattr(rich_sharding.ch, "sorted_keys", []),
+                getattr(rich_sharding.ch, "ring", {}),
+                getattr(rich_sharding, "_h", hash),
                 p_node,
             )
-            a_node = cast(Dict[Any, str], sharding.alt).get(k)
+            a_node = cast(Dict[Any, str], rich_sharding.alt).get(k)
             if a_node and a_node != p_node:
                 write_buckets[a_node].append(k)
 
