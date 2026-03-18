@@ -25,7 +25,9 @@ dev = [
     "pytest>=7.4",
     "ruff>=0.4",
     "mypy>=1.8",
-    "pre-commit>=3.5"
+    "pre-commit>=3.5",
+    "pandas-stubs",
+    "types-redis",
 ]
 
 [tool.setuptools.packages.find]
