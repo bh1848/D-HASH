@@ -9,7 +9,7 @@ from redis import ConnectionPool, Redis
 
 from dhash.routing.alternate import ensure_alternate
 
-from ..config.defaults import SEED, TTL_SECONDS
+from ..config.defaults import REDIS_PORT, SEED, TTL_SECONDS
 from ..typing import Sharding
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ else:
 
 def _redis_client(host: str) -> RedisInstance:
     if host not in _connection_pools:
-        _connection_pools[host] = ConnectionPool(host=host, port=6379, db=0)
+        _connection_pools[host] = ConnectionPool(host=host, port=REDIS_PORT, db=0)
     return Redis(connection_pool=_connection_pools[host])
 
 

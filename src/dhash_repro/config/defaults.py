@@ -9,6 +9,7 @@ from numpy.random import default_rng
 from dhash.config import D_HASH_REPLICATION_FACTOR, VIRTUAL_POINTS_PER_NODE
 
 NODES: List[str] = [f"redis-{i}" for i in range(1, 6)]
+REDIS_PORT: int = 6379
 TTL_SECONDS: int = 600
 PIPELINE_SIZE_DEFAULT: int = 200
 THRESHOLD_DEFAULT: int = 300
