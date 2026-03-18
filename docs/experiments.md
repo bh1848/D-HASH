@@ -30,7 +30,7 @@ This mode compares:
 - Consistent Hashing
 - D-HASH
 
-It also sweeps a small range of Zipf alpha values during request generation.
+It sweeps pipeline sizes B ∈ {50, 100, 200, 500, 1000} at the alpha value set by DHASH_ALPHA.
 
 ---
 

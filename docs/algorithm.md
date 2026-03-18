@@ -162,7 +162,7 @@ The current implementation does not:
 - choose alternates from live performance data
 - rebalance writes across multiple nodes
 
-The algorithm in this repository should be read as a deterministic reproduction of the main D-HASH idea, not as a dynamic load balancer.
+The algorithm in this repository is the reference implementation of D-HASH, focused on routing correctness rather than production-grade load balancing.
 
 ---
 

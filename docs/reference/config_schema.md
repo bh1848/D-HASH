@@ -108,6 +108,7 @@ Examples include:
 - Zipf alpha sweep values
 - ablation thresholds
 - dataset-specific defaults for `B`, `W`, `T`, and `rho`
+- Redis port (`REDIS_PORT`, default: 6379)
 
 These defaults are defined in:
 
