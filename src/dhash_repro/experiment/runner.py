@@ -108,7 +108,7 @@ def _microbench_once_get_node(
             replicas=VIRTUAL_POINTS_PER_NODE,
         )
     elif algo == "D-HASH":
-        params = dhash_params or {"T": 50, "W": 1024}
+        params = dhash_params or {"T": 300, "W": 200}
         sh = DHash(
             [f"redis-{i}" for i in range(1, 6)],
             hot_key_threshold=int(params["T"]),
