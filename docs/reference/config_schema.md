@@ -19,8 +19,10 @@ Supported values:
 
 - `all`
 - `pipeline`
+- `microbench`
 - `zipf`
 - `ablation`
+- `redistrib`
 
 Default:
 
@@ -39,7 +41,8 @@ This value is used in:
 - `pipeline` mode
 - `ablation` mode
 
-In `zipf` mode, the implementation uses the fixed values defined in code instead of this variable.
+In `zipf` mode, this variable is not used.
+The implementation uses `DHASH_ZIPF_ALPHAS` when it is set, or the in-code default alpha sweep otherwise.
 
 Default:
 
@@ -58,25 +61,85 @@ This value is used to run the same benchmark multiple times with different rando
 Default:
 
 ```text
-1
+10
 ```
 
 ---
 
-### `DHASH_DATASET`
+### `DHASH_DATASET_FILTER`
 
-Selects the dataset used by the experiment runner.
+Selects which dataset set the experiment runner should execute.
 
 Supported values:
 
 - `nasa`
 - `ebay`
+- `all`
 
 Default:
 
 ```text
-nasa
+ALL
 ```
+
+`DHASH_DATASET` is still accepted as a legacy single-dataset selector.
+
+---
+
+### `DHASH_FIXED_WINDOW`
+
+Overrides the dataset-specific default `W` used by zipf, microbench, and ablation stages.
+
+---
+
+### `DHASH_DHASH_T`
+
+Overrides the dataset-specific default threshold `T` used in the main Zipf stage.
+
+---
+
+### `DHASH_PIPELINE_FOR_ZIPF`
+
+Overrides the dataset-specific default pipeline size `B` used in the main Zipf stage.
+
+---
+
+### `DHASH_ZIPF_ALPHAS`
+
+Overrides the default Zipf alpha sweep used in `zipf` mode.
+
+Examples:
+
+- `1.5`
+- `1.1,1.3,1.5`
+
+If unset, the implementation uses the in-code default sweep.
+
+---
+
+### `DHASH_ALGOS`
+
+Selects the comparison set for applicable stages.
+
+Supported values:
+
+- `auto`
+- `minimal`
+- `all`
+- `custom`
+
+---
+
+### `DHASH_ALGOS_LIST`
+
+Comma-separated algorithm aliases used when `DHASH_ALGOS=custom`.
+
+Supported aliases:
+
+- `ch`
+- `wch`
+- `hrw`
+- `dhash`
 
 ---
 
@@ -95,6 +158,7 @@ The runner can load either a processed trace or a raw dataset file.
 - `DHASH_EBAY_RAW`: path to a raw eBay csv file or zip file
 
 If these variables are not set, the runner searches common data directories in the repository.
+The repository search order prefers known raw dataset filenames before repository processed traces.
 
 ---
 

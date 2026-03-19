@@ -36,6 +36,29 @@ def test_resolve_algorithms_ablation_returns_only_dhash() -> None:
     assert resolve_algorithms("ablation", "auto") == ["D-HASH"]
 
 
+def test_resolve_algorithms_microbench_returns_ch_and_dhash() -> None:
+    assert resolve_algorithms("microbench", "auto") == ["Consistent Hashing", "D-HASH"]
+
+
+def test_resolve_algorithms_redistrib_returns_baseline_families() -> None:
+    assert resolve_algorithms("redistrib", "auto") == [
+        "Consistent Hashing",
+        "Weighted CH",
+        "Rendezvous",
+    ]
+
+
+def test_resolve_algorithms_minimal_returns_ch_and_dhash() -> None:
+    assert resolve_algorithms("zipf", "minimal") == ["Consistent Hashing", "D-HASH"]
+
+
+def test_resolve_algorithms_custom_resolves_aliases() -> None:
+    assert resolve_algorithms("zipf", "custom", "ch,dhash") == [
+        "Consistent Hashing",
+        "D-HASH",
+    ]
+
+
 def test_run_single_mode_consistent_hashing_calls_benchmark_once() -> None:
     with (
         patch(

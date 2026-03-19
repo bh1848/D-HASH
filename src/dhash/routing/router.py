@@ -1,5 +1,5 @@
 from bisect import bisect
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, cast
 
 from ..config import (
     DEFAULT_HOT_KEY_THRESHOLD,
@@ -42,44 +42,38 @@ class DHash:
         self.alt: Dict[Any, str] = {}
         self.ch = ring if ring is not None else ConsistentHashing(nodes, replicas=replicas)
         self.hot_key_threshold: int = self.T
-        self._ring_signature: Tuple[Tuple[int, ...], Tuple[str, ...]] = (
-            self._compute_ring_signature()
-        )
+        self._ring_signature = self._compute_ring_signature()
 
     @staticmethod
     def _h(key: Any) -> int:
         return fast_hash64(key)
 
-    def _compute_ring_signature(self) -> Tuple[Tuple[int, ...], Tuple[str, ...]]:
-        rk = tuple(getattr(self.ch, "sorted_keys", []))
-        ring = cast(Dict[int, str], getattr(self.ch, "ring", {}))
-        owners = tuple(ring[k] for k in rk)
-        return rk, owners
-
-    def _current_ring_nodes(self) -> List[str]:
-        ring = cast(Dict[int, str], getattr(self.ch, "ring", {}))
-        ordered: List[str] = []
-        seen = set()
-        for k in getattr(self.ch, "sorted_keys", []):
-            node = ring[k]
-            if node not in seen:
-                seen.add(node)
-                ordered.append(node)
-        return ordered or list(self.nodes)
-
     def _sync_membership_if_needed(self) -> None:
-        signature = self._compute_ring_signature()
-        if signature == self._ring_signature:
+        current_signature = self._compute_ring_signature()
+        if current_signature == self._ring_signature:
             return
-        self._ring_signature = signature
-        self.nodes = self._current_ring_nodes()
+
+        self._ring_signature = current_signature
+        self.nodes = self._extract_nodes_from_ring()
         self.alt.clear()
 
     def refresh_membership(self, nodes: List[str]) -> None:
         self.nodes = list(nodes)
         self.ch = ConsistentHashing(self.nodes, replicas=self.ch.replicas)
-        self.alt.clear()
         self._ring_signature = self._compute_ring_signature()
+        self.alt.clear()
+
+    def _extract_nodes_from_ring(self) -> List[str]:
+        rk = getattr(self.ch, "sorted_keys", None)
+        ring = getattr(self.ch, "ring", None)
+        if not rk or not ring:
+            return list(self.nodes)
+        return list(dict.fromkeys(cast(str, ring[key]) for key in rk))
+
+    def _compute_ring_signature(self) -> tuple[Any, ...]:
+        rk = tuple(getattr(self.ch, "sorted_keys", ()))
+        ring = getattr(self.ch, "ring", {})
+        return rk, tuple(cast(str, ring[key]) for key in rk)
 
     def _primary_safe(self, key: Any) -> str:
         rk = getattr(self.ch, "sorted_keys", None)

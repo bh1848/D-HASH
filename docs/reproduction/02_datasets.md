@@ -21,8 +21,8 @@ These datasets are used to build request traces for benchmark execution.
 ### 2. eBay Auction Dataset
 - Source: https://www.kaggle.com/datasets/onlineauctions/online-auctions-dataset
 
-> Raw dataset files are **not included** in this repository.
-> Please download them directly from the original source pages and review the applicable terms or license information before use.
+> Raw dataset files may be provided locally under `data/raw`, but they are not guaranteed in every checkout or distribution of this repository.
+> If they are absent, please download them directly from the original source pages and review the applicable terms or license information before use.
 
 ---
 
@@ -36,8 +36,8 @@ The runner can load:
 - a raw log file
 - a raw zip file
 
-If a processed file is available, the runner uses it directly.
-Otherwise, it can preprocess a raw file and generate a processed trace.
+If `DHASH_NASA_TRACE` is set explicitly, the runner uses it directly.
+Otherwise, the repository search order prefers known raw dataset filenames before repository processed traces.
 
 ---
 
@@ -51,38 +51,34 @@ The runner can load:
 - a raw CSV file
 - a raw zip file
 
-As with NASA, the runner prefers a processed file when one already exists.
+If `DHASH_EBAY_TRACE` is set explicitly, the runner uses it directly.
+Otherwise, the repository search order prefers known raw dataset filenames before repository processed traces.
 
 ---
 
-## Processed Trace
+## Current Parsing Semantics
 
-A processed trace is the format expected by the benchmark runner during normal execution.
-
-Using a processed trace avoids repeating raw-data preprocessing on every run and helps keep experiment execution consistent.
-
----
-
-## Raw Dataset
-
-A raw dataset is the original input file used to generate a processed trace.
-
-Raw loading is supported mainly for reproduction convenience.
+- NASA raw input is parsed as a request sequence of URL keys from CLF-style log lines.
+- eBay raw input is parsed as `auctionid` keys and then reduced to a sorted unique-key base.
+- Processed trace files are read as plain text, one key per line.
 
 ---
 
 ## Dataset Selection
 
-The active dataset is selected through the following environment variable:
+The active dataset can be selected through either:
 
 ```text
-DHASH_DATASET
+DHASH_DATASET_FILTER
 ```
 
 Supported values are:
 
 - `nasa`
 - `ebay`
+- `all`
+
+`DHASH_DATASET` is still accepted as a legacy single-dataset selector.
 
 The runner resolves the corresponding processed or raw path from the configured environment variables or the default data directories.
 
@@ -90,7 +86,7 @@ The runner resolves the corresponding processed or raw path from the configured 
 
 ## Scope
 
-- Processed traces are recommended for regular benchmark execution.
-- Raw datasets are intended for preprocessing and reproduction workflows.
+- Processed traces are useful when you want an explicit fixed input file.
+- Raw datasets are fully supported by the current runner and are often the default resolution path in repository-based execution.
 - This document describes dataset usage for running experiments and reproducing results.
 - For dataset ownership, licensing, and usage terms, please refer to the original source pages.

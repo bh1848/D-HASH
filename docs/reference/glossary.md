@@ -54,7 +54,7 @@ Writes always go to the primary node in the current D-HASH implementation.
 
 A second node assigned to a hot key after the threshold is reached.
 
-In this repository, the alternate is selected deterministically from the ring order.
+In this repository, the alternate is selected deterministically as a stride-based successor on the ring.
 
 ---
 

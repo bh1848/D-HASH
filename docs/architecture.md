@@ -68,7 +68,7 @@ Reads may switch between the primary node and an alternate node after the thresh
 
 Computes one alternate node for a key.
 
-The alternate is selected deterministically from the ring order.
+The alternate is selected deterministically as a stride-based successor on the ring.
 It is not chosen from observed node load.
 
 ### `guard.py`
@@ -152,6 +152,8 @@ Redis Node
 
 The read path depends on per-key count state.
 The write path does not.
+
+When the ring membership changes, the router invalidates cached alternate nodes and recomputes them from the updated ring metadata on demand.
 
 ---
 

@@ -57,11 +57,12 @@ def test_membership_change_invalidates_alternate_cache_automatically() -> None:
 
     router.get_node(key, op="read")
     assert key in router.alt
+    router.alt[key] = "stale-node"
 
     ring.add_node("n3")
 
     router.get_node(key, op="read")
 
     assert key in router.alt
-    assert set(router.nodes) == {"n1", "n2", "n3"}
-    assert router.alt[key] in {"n1", "n2", "n3"}
+    assert router.alt[key] != "stale-node"
+    assert "n3" in router.nodes

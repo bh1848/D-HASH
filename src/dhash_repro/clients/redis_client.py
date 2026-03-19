@@ -36,39 +36,87 @@ def _unique_keys(keys: Iterable[Any]) -> List[Any]:
     return list(dict.fromkeys(keys))
 
 
-def preload_cluster(sharding: Sharding, keys: List[Any], ttl_seconds: int = TTL_SECONDS) -> None:
-    unique_keys = _unique_keys(keys)
+def _maybe_add_alternate_write(
+    sharding: Sharding,
+    key: Any,
+    primary_node: str,
+    write_buckets: Dict[str, List[Any]],
+) -> None:
+    if not hasattr(sharding, "alt") or not hasattr(sharding, "ch"):
+        return
+
+    rich_sharding = cast(Any, sharding)
+    ensure_alternate(
+        key,
+        rich_sharding.alt,
+        rich_sharding.nodes,
+        getattr(rich_sharding.ch, "sorted_keys", []),
+        getattr(rich_sharding.ch, "ring", {}),
+        getattr(rich_sharding, "_h", hash),
+        primary_node,
+    )
+    a_node = cast(Dict[Any, str], rich_sharding.alt).get(key)
+    if a_node and a_node != primary_node:
+        write_buckets[a_node].append(key)
+
+
+def _build_write_buckets(
+    sharding: Sharding,
+    keys: Iterable[Any],
+    *,
+    include_alternate: bool,
+) -> Dict[str, List[Any]]:
     write_buckets: Dict[str, List[Any]] = defaultdict(list)
 
-    for k in unique_keys:
-        p_node = sharding.get_node(k, op="write")
-        write_buckets[p_node].append(k)
+    for key in keys:
+        primary_node = sharding.get_node(key, op="write")
+        write_buckets[primary_node].append(key)
+        if include_alternate:
+            _maybe_add_alternate_write(sharding, key, primary_node, write_buckets)
 
-        if hasattr(sharding, "alt") and hasattr(sharding, "ch"):
-            rich_sharding = cast(Any, sharding)
-            ensure_alternate(
-                k,
-                rich_sharding.alt,
-                rich_sharding.nodes,
-                getattr(rich_sharding.ch, "sorted_keys", []),
-                getattr(rich_sharding.ch, "ring", {}),
-                getattr(rich_sharding, "_h", hash),
-                p_node,
-            )
-            a_node = cast(Dict[Any, str], rich_sharding.alt).get(k)
-            if a_node and a_node != p_node:
-                write_buckets[a_node].append(k)
+    return write_buckets
 
-    payload = b'{"preload":1}'
+
+def _execute_write_buckets(
+    write_buckets: Dict[str, List[Any]],
+    *,
+    payload: bytes,
+    ttl_seconds: int,
+    log_prefix: str,
+) -> None:
     for node, node_keys in write_buckets.items():
         try:
             cli = redis_client_for_node(node)
             pipe = cli.pipeline()
-            for k in node_keys:
-                pipe.set(str(k), payload, ex=ttl_seconds)
+            for key in node_keys:
+                pipe.set(str(key), payload, ex=ttl_seconds)
             pipe.execute()
         except Exception as e:
-            logger.warning("Preload write failed on %s: %s", node, e)
+            logger.warning("%s write failed on %s: %s", log_prefix, node, e)
+
+
+def _execute_read_buckets(read_buckets: Dict[str, List[Any]], log_prefix: str) -> None:
+    for node, node_keys in read_buckets.items():
+        try:
+            cli = redis_client_for_node(node)
+            pipe = cli.pipeline()
+            for key in node_keys:
+                pipe.get(str(key))
+            pipe.execute()
+        except Exception as e:
+            logger.warning("%s read failed on %s: %s", log_prefix, node, e)
+
+
+def preload_cluster(sharding: Sharding, keys: List[Any], ttl_seconds: int = TTL_SECONDS) -> None:
+    unique_keys = _unique_keys(keys)
+    write_buckets = _build_write_buckets(sharding, unique_keys, include_alternate=True)
+
+    _execute_write_buckets(
+        write_buckets,
+        payload=b'{"preload":1}',
+        ttl_seconds=ttl_seconds,
+        log_prefix="Preload",
+    )
 
     logger.info(
         "[Preload] Populated %d unique keys across %d nodes.", len(unique_keys), len(write_buckets)
@@ -83,64 +131,32 @@ def warmup_cluster(
     ratio: Optional[float] = None,
     cap: Optional[int] = None,
 ) -> None:
-    unique_keys = _unique_keys(keys)
-    if not unique_keys:
+    if not keys:
         logger.info("[Warmup] Skipped because there are no keys.")
         return
 
     if ratio is None:
-        n = min(len(unique_keys), max(1, int(sample_size)))
+        n = min(len(keys), max(1, int(sample_size)))
     else:
         effective_cap = sample_size if cap is None else cap
-        n = max(1, min(int(len(unique_keys) * ratio), int(effective_cap)))
+        n = max(1, min(int(len(keys) * ratio), int(effective_cap)))
 
     rng = random.Random(SEED)
-    sample = rng.sample(unique_keys, n) if len(unique_keys) > n else list(unique_keys)
+    sample = rng.sample(keys, n) if len(keys) >= n else list(keys)
 
-    write_buckets: Dict[str, List[Any]] = defaultdict(list)
+    write_buckets = _build_write_buckets(sharding, sample, include_alternate=True)
     read_buckets: Dict[str, List[Any]] = defaultdict(list)
 
-    for k in sample:
-        p_node = sharding.get_node(k, op="write")
-        write_buckets[p_node].append(k)
+    for key in sample:
+        read_buckets[sharding.get_node(key, op="read")].append(key)
 
-        if hasattr(sharding, "alt") and hasattr(sharding, "ch"):
-            rich_sharding = cast(Any, sharding)
-            ensure_alternate(
-                k,
-                rich_sharding.alt,
-                rich_sharding.nodes,
-                getattr(rich_sharding.ch, "sorted_keys", []),
-                getattr(rich_sharding.ch, "ring", {}),
-                getattr(rich_sharding, "_h", hash),
-                p_node,
-            )
-            a_node = cast(Dict[Any, str], rich_sharding.alt).get(k)
-            if a_node and a_node != p_node:
-                write_buckets[a_node].append(k)
-
-        read_buckets[sharding.get_node(k, op="read")].append(k)
-
-    payload = b'{"warm":1}'
-    for node, node_keys in write_buckets.items():
-        try:
-            cli = redis_client_for_node(node)
-            pipe = cli.pipeline()
-            for k in node_keys:
-                pipe.set(str(k), payload, ex=60)
-            pipe.execute()
-        except Exception as e:
-            logger.warning("Warmup write failed on %s: %s", node, e)
-
-    for node, node_keys in read_buckets.items():
-        try:
-            cli = redis_client_for_node(node)
-            pipe = cli.pipeline()
-            for k in node_keys:
-                pipe.get(str(k))
-            pipe.execute()
-        except Exception as e:
-            logger.warning("Warmup read failed on %s: %s", node, e)
+    _execute_write_buckets(
+        write_buckets,
+        payload=b'{"warm":1}',
+        ttl_seconds=60,
+        log_prefix="Warmup",
+    )
+    _execute_read_buckets(read_buckets, "Warmup")
 
     logger.info(
         "[Warmup] Touched %d sampled keys across %d nodes.",

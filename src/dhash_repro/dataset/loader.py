@@ -1,15 +1,17 @@
 import csv
+import io
 import logging
 import os
 import re
 import zipfile
-from collections import Counter
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from dhash_repro.config.defaults import DATASET_DEFAULTS, DEFAULT_DATASET
 
 logger = logging.getLogger(__name__)
+_NASA_ZIP_PREFERRED_FILES = ("access.log", "nasa_http_logs.log")
+_EBAY_ZIP_PREFERRED_FILES = ("auction.csv", "ebay_auction_logs.csv")
 
 _CLF_RE = re.compile(
     r"^(?P<host>\S+) \S+ \S+ \[(?P<time>.*?)\] "
@@ -75,17 +77,21 @@ def _candidate_paths(dataset: str) -> List[Path]:
         if dataset == "nasa":
             candidates.extend(
                 [
-                    data_root / "processed" / "nasa_trace.txt",
                     data_root / "raw" / "nasa_http_logs.zip",
                     data_root / "raw" / "nasa_http_logs.log",
+                    data_root / "nasa_http_logs.zip",
+                    data_root / "nasa_http_logs.log",
+                    data_root / "processed" / "nasa_trace.txt",
                 ]
             )
         elif dataset == "ebay":
             candidates.extend(
                 [
-                    data_root / "processed" / "ebay_trace.txt",
                     data_root / "raw" / "ebay_auction_logs.csv",
                     data_root / "raw" / "ebay_auction_logs.zip",
+                    data_root / "ebay_auction_logs.csv",
+                    data_root / "ebay_auction_logs.zip",
+                    data_root / "processed" / "ebay_trace.txt",
                 ]
             )
 
@@ -117,32 +123,64 @@ def _candidate_paths(dataset: str) -> List[Path]:
     return uniq
 
 
-def _load_ranked_keys_from_trace(trace_path: str) -> Tuple[List[str], int]:
-    counts: Counter[str] = Counter()
-    total_requests = 0
+def _load_keys_from_trace(trace_path: str) -> Tuple[List[str], int]:
+    keys: List[str] = []
 
     with open(trace_path, "r", encoding="utf-8") as f:
         for raw in f:
             key = raw.strip()
-            if not key:
-                continue
-            counts[key] += 1
-            total_requests += 1
+            if key:
+                keys.append(key)
 
-    if not counts:
+    if not keys:
         raise ValueError(f"Trace file is empty: {trace_path}")
 
-    ranked_keys = [key for key, _ in counts.most_common()]
-    return ranked_keys, total_requests
+    return keys, len(keys)
+
+
+def _pick_zip_member(
+    zf: zipfile.ZipFile,
+    *,
+    preferred_names: Tuple[str, ...],
+    required_suffix: str,
+    dataset_label: str,
+    source_path: Path,
+) -> str:
+    names = [name for name in zf.namelist() if not name.endswith("/")]
+    if not names:
+        raise ValueError(f"No file found inside {dataset_label} zip: {source_path}")
+
+    lower_to_name = {name.lower(): name for name in names}
+    for preferred in preferred_names:
+        chosen = lower_to_name.get(preferred.lower())
+        if chosen is not None:
+            return chosen
+
+    suffix_matches = [name for name in names if name.lower().endswith(required_suffix.lower())]
+    if len(suffix_matches) == 1:
+        return suffix_matches[0]
+    if len(suffix_matches) > 1:
+        raise ValueError(
+            f"Multiple {dataset_label} candidates found inside zip {source_path}: {suffix_matches}. "
+            f"Rename the desired file or set an explicit raw input path."
+        )
+
+    raise ValueError(
+        f"No {required_suffix} file found inside {dataset_label} zip: {source_path}. "
+        f"Expected one of {preferred_names} or a single *{required_suffix} file."
+    )
 
 
 def _iter_nasa_log_lines(path: Path) -> Iterable[str]:
     if path.suffix.lower() == ".zip":
         with zipfile.ZipFile(path, "r") as zf:
-            names = [n for n in zf.namelist() if not n.endswith("/")]
-            if not names:
-                raise ValueError(f"No file found inside NASA zip: {path}")
-            log_name = next((n for n in names if n.lower().endswith(".log")), names[0])
+            log_name = _pick_zip_member(
+                zf,
+                preferred_names=_NASA_ZIP_PREFERRED_FILES,
+                required_suffix=".log",
+                dataset_label="NASA",
+                source_path=path,
+            )
             with zf.open(log_name, "r") as fp:
                 for raw in fp:
                     yield raw.decode("ISO-8859-1", errors="ignore")
@@ -152,37 +190,47 @@ def _iter_nasa_log_lines(path: Path) -> Iterable[str]:
                 yield line
 
 
-def _load_ranked_keys_from_nasa_raw(path: str) -> Tuple[List[str], int]:
-    counts: Counter[str] = Counter()
-    total_requests = 0
+def load_logs_dataset(path: str) -> Tuple[List[Any], Dict[str, Any]]:
+    keys: List[str] = []
+    meta: Dict[str, Any] = {}
 
     for line in _iter_nasa_log_lines(Path(path)):
         m = _CLF_RE.match(line.strip())
         if not m:
             continue
         url = m.group("url")
-        if not url:
+        status = int(m.group("status"))
+        if not url or status == 0:
             continue
-        counts[url] += 1
-        total_requests += 1
+        keys.append(url)
+        meta.setdefault(url, []).append(
+            {
+                "host": m.group("host"),
+                "timestamp": m.group("time"),
+                "method": m.group("method"),
+                "protocol": m.group("proto"),
+                "status": status,
+                "size": m.group("size"),
+            }
+        )
 
-    if not counts:
+    if not keys:
         raise ValueError(f"No valid NASA URL keys parsed from: {path}")
 
-    ranked_keys = [key for key, _ in counts.most_common()]
-    return ranked_keys, total_requests
+    return keys, meta
 
 
 def _iter_csv_rows(path: Path) -> Iterable[Dict[str, str]]:
     if path.suffix.lower() == ".zip":
         with zipfile.ZipFile(path, "r") as zf:
-            names = [n for n in zf.namelist() if not n.endswith("/")]
-            if not names:
-                raise ValueError(f"No file found inside CSV zip: {path}")
-            csv_name = next((n for n in names if n.lower().endswith(".csv")), names[0])
+            csv_name = _pick_zip_member(
+                zf,
+                preferred_names=_EBAY_ZIP_PREFERRED_FILES,
+                required_suffix=".csv",
+                dataset_label="CSV",
+                source_path=path,
+            )
             with zf.open(csv_name, "r") as fp:
-                import io
-
                 text_fp = io.TextIOWrapper(fp, encoding="utf-8-sig", newline="")
                 reader = csv.DictReader(text_fp)
                 for row in reader:
@@ -194,25 +242,34 @@ def _iter_csv_rows(path: Path) -> Iterable[Dict[str, str]]:
                 yield row
 
 
-def _load_ranked_keys_from_ebay_raw(
-    path: str, key_column: str = "auctionid"
-) -> Tuple[List[str], int]:
-    counts: Counter[str] = Counter()
-    total_requests = 0
+def load_csv_dataset(
+    path: str,
+    key_column: str = "auctionid",
+    natural_hot_threshold: Optional[int] = None,
+) -> Tuple[List[Any], Dict[str, Any]]:
+    rows = list(_iter_csv_rows(Path(path)))
 
-    for row in _iter_csv_rows(Path(path)):
+    if not rows:
+        raise ValueError(f"No valid eBay rows parsed from: {path}")
+    if key_column not in rows[0]:
+        raise ValueError(f"'{key_column}' column not found in CSV.")
+
+    counts: Dict[str, int] = {}
+    meta: Dict[str, List[Dict[str, str]]] = {}
+    for row in rows:
         raw_key = row.get(key_column)
         key = raw_key.strip() if raw_key is not None else ""
         if not key:
             continue
-        counts[key] += 1
-        total_requests += 1
+        counts[key] = counts.get(key, 0) + 1
+        meta.setdefault(key, []).append(row)
 
-    if not counts:
-        raise ValueError(f"No valid eBay keys parsed from: {path}")
+    if natural_hot_threshold is None:
+        keys = sorted(counts.keys())
+    else:
+        keys = sorted(key for key, count in counts.items() if count <= natural_hot_threshold)
 
-    ranked_keys = [key for key, _ in counts.most_common()]
-    return ranked_keys, total_requests
+    return keys, meta
 
 
 def load_dataset_workload_base(dataset: str) -> Tuple[List[str], int]:
@@ -222,7 +279,7 @@ def load_dataset_workload_base(dataset: str) -> Tuple[List[str], int]:
     trace_path = os.getenv(trace_env, "").strip()
     if trace_path:
         logger.info("[%s] Loading processed trace from %s", dataset, trace_path)
-        return _load_ranked_keys_from_trace(trace_path)
+        return _load_keys_from_trace(trace_path)
 
     for candidate in _candidate_paths(dataset):
         if not candidate.exists():
@@ -233,18 +290,20 @@ def load_dataset_workload_base(dataset: str) -> Tuple[List[str], int]:
         if dataset == "nasa":
             if suffix == ".txt":
                 logger.info("[%s] Loading processed trace from %s", dataset, candidate)
-                return _load_ranked_keys_from_trace(str(candidate))
+                return _load_keys_from_trace(str(candidate))
             if suffix in {".zip", ".log"}:
                 logger.info("[%s] Loading raw NASA dataset from %s", dataset, candidate)
-                return _load_ranked_keys_from_nasa_raw(str(candidate))
+                keys, _ = load_logs_dataset(str(candidate))
+                return [str(key) for key in keys], len(keys)
 
         elif dataset == "ebay":
             if suffix == ".txt":
                 logger.info("[%s] Loading processed trace from %s", dataset, candidate)
-                return _load_ranked_keys_from_trace(str(candidate))
+                return _load_keys_from_trace(str(candidate))
             if suffix in {".csv", ".zip"}:
                 logger.info("[%s] Loading raw eBay dataset from %s", dataset, candidate)
-                return _load_ranked_keys_from_ebay_raw(str(candidate))
+                keys, _ = load_csv_dataset(str(candidate), natural_hot_threshold=None)
+                return [str(key) for key in keys], len(keys)
 
     raise ValueError(
         f"No dataset input found for '{dataset}'. "

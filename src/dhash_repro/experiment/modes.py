@@ -12,13 +12,46 @@ from dhash_repro.typing import Sharding
 logger = logging.getLogger(__name__)
 
 ALL_MODES: Tuple[str, ...] = ("Consistent Hashing", "Weighted CH", "Rendezvous", "D-HASH")
+_ALIAS_MAP: Dict[str, str] = {
+    "ch": "Consistent Hashing",
+    "wch": "Weighted CH",
+    "hrw": "Rendezvous",
+    "dhash": "D-HASH",
+}
 
 
-def resolve_algorithms(stage: str, algos: str) -> List[str]:
-    if stage in ("microbench", "pipeline"):
+def _parse_algos_list(algos_list: str) -> List[str]:
+    items = [item.strip().lower() for item in algos_list.split(",") if item.strip()]
+    resolved: List[str] = []
+    for item in items:
+        if item not in _ALIAS_MAP:
+            raise ValueError(
+                f"Unknown algorithm alias '{item}'. Use one of: {', '.join(sorted(_ALIAS_MAP))}"
+            )
+        resolved.append(_ALIAS_MAP[item])
+    if not resolved:
+        raise ValueError("Empty algorithm list after parsing.")
+    return resolved
+
+
+def resolve_algorithms(stage: str, algos: str, algos_list: str = "") -> List[str]:
+    if stage == "microbench":
         return ["Consistent Hashing", "D-HASH"]
     if stage == "ablation":
         return ["D-HASH"]
+    if stage == "redistrib":
+        return ["Consistent Hashing", "Weighted CH", "Rendezvous"]
+
+    if algos == "all":
+        return list(ALL_MODES)
+    if algos == "minimal":
+        return ["Consistent Hashing", "D-HASH"]
+    if algos == "custom":
+        return _parse_algos_list(algos_list)
+
+    if stage == "pipeline":
+        return ["Consistent Hashing", "D-HASH"]
+
     return list(ALL_MODES)
 
 
@@ -42,17 +75,14 @@ def run_single_mode(
     elif mode_name == "Rendezvous":
         sh = RendezvousHashing(NODES)
     elif mode_name == "D-HASH":
-        params = dhash_params or {"T": 300, "W": pipeline_size}
+        params = dhash_params or {"T": 50, "W": 1024}
         sh = DHash(NODES, hot_key_threshold=int(params["T"]), window_size=int(params["W"]))
     else:
         raise ValueError(f"Unknown mode: {mode_name}")
 
-    warm_keys = preload_keys if preload_keys is not None else list(dict.fromkeys(keys))
-
     flush_databases(NODES, flush_async=False)
-
-    preload_cluster(sh, warm_keys)
-    warmup_cluster(sh, warm_keys)
+    preload_cluster(sh, preload_keys or keys)
+    warmup_cluster(sh, keys)
 
     metrics = benchmark_cluster(keys, sh, pipeline_size=pipeline_size)
 

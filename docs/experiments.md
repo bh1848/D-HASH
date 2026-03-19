@@ -17,8 +17,10 @@ The purpose is to compare routing strategies under controlled workloads.
 The current implementation supports the following modes:
 
 - `pipeline`
+- `microbench`
 - `zipf`
 - `ablation`
+- `redistrib`
 - `all`
 
 ### `pipeline`
@@ -30,13 +32,25 @@ This mode compares:
 - Consistent Hashing
 - D-HASH
 
-It sweeps pipeline sizes B ∈ {50, 100, 200, 500, 1000} at the alpha value set by DHASH_ALPHA.
+It sweeps pipeline sizes `B ∈ {50, 100, 200, 500, 1000}` using a Zipf workload with `alpha = 1.5`.
+
+---
+
+### `microbench`
+
+Runs routing-only microbenchmarks for:
+
+- Consistent Hashing
+- D-HASH (cold path)
+- D-HASH (hot path)
+
+This mode measures pure `get_node()` overhead in `ns/op` without Redis I/O.
 
 ---
 
 ### `zipf`
 
-Runs a synthetic Zipf benchmark across multiple routing strategies.
+Runs a Zipf benchmark across multiple routing strategies.
 
 This mode compares:
 
@@ -45,7 +59,10 @@ This mode compares:
 - Rendezvous Hashing
 - D-HASH
 
-The alpha values for this mode are defined in code.
+The benchmark runner generates Zipf-distributed request sequences from dataset-derived key bases.
+
+The alpha values for this mode are defined in code by default.
+They may also be overridden at runtime with `DHASH_ZIPF_ALPHAS`.
 
 ---
 
@@ -62,9 +79,23 @@ It focuses on D-HASH only.
 
 ### `all`
 
-Runs all experiment stages in sequence.
+Runs `pipeline`, `microbench`, `zipf`, and `ablation` in sequence.
 
 This is the default mode used for a full benchmark run.
+
+---
+
+### `redistrib`
+
+Runs an offline redistribution report for membership changes.
+
+This mode compares:
+
+- Consistent Hashing
+- Weighted Consistent Hashing
+- Rendezvous Hashing
+
+It evaluates `5 -> 6` and `6 -> 5` node changes using up to 100,000 sampled keys.
 
 ---
 
@@ -77,7 +108,7 @@ The experiment runner supports two dataset names:
 
 These workloads are used to generate request traces for benchmark execution.
 
-In addition to dataset-based execution, the repository also includes synthetic Zipf-based evaluation.
+The benchmark runner generates Zipf-distributed request sequences from these dataset-derived key bases.
 
 ---
 
@@ -87,7 +118,9 @@ The experiment layer compares routing behavior at the level of:
 
 - request distribution
 - throughput
-- hotspot concentration
+- latency
+- load stddev
+- redistribution rate
 - changes across repeated runs
 
 The comparison is intentionally narrow.

@@ -3,7 +3,7 @@ import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from statistics import stdev
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from dhash.stats import weighted_percentile
 
@@ -26,6 +26,56 @@ def _value_payload(value_bytes: int) -> bytes:
     return base + b"x" * (value_bytes - len(base))
 
 
+def _build_io_buckets(
+    keys: List[Any],
+    sharding: Sharding,
+) -> Tuple[Dict[str, List[Any]], Dict[str, List[Any]]]:
+    write_buckets: Dict[str, List[Any]] = defaultdict(list)
+    read_buckets: Dict[str, List[Any]] = defaultdict(list)
+
+    for key in keys:
+        primary_node = sharding.get_node(key, op="write")
+        write_buckets[primary_node].append(key)
+        read_buckets[sharding.get_node(key, op="read")].append(key)
+
+    return write_buckets, read_buckets
+
+
+def _run_node_batches(
+    node: str,
+    node_keys: List[Any],
+    *,
+    pipeline_size: int,
+    payload: Optional[bytes],
+    ex_seconds: int,
+) -> Tuple[float, List[Tuple[float, int]]]:
+    cli = redis_client_for_node(node)
+    total_time = 0.0
+    samples: List[Tuple[float, int]] = []
+
+    for i in range(0, len(node_keys), pipeline_size):
+        chunk = node_keys[i : i + pipeline_size]
+        pipe = cli.pipeline()
+        for key in chunk:
+            if payload is None:
+                pipe.get(str(key))
+            else:
+                pipe.set(str(key), payload, ex=ex_seconds)
+        t0 = time.perf_counter_ns()
+        _ = pipe.execute()
+        dt = (time.perf_counter_ns() - t0) / 1e9
+        total_time += dt
+        ops = max(len(chunk), 1)
+        samples.append((dt / ops, ops))
+
+    return total_time, samples
+
+
+def _wavg(samples: List[Tuple[float, int]]) -> float:
+    wsum = sum(weight for _, weight in samples)
+    return sum(value * weight for value, weight in samples) / wsum if wsum > 0 else 0.0
+
+
 def benchmark_cluster(
     keys: List[Any],
     sharding: Sharding,
@@ -33,13 +83,7 @@ def benchmark_cluster(
     pipeline_size: int = PIPELINE_SIZE_DEFAULT,
     value_bytes: int = VALUE_BYTES,
 ) -> Dict[str, Any]:
-    write_buckets: Dict[str, List[Any]] = defaultdict(list)
-    read_buckets: Dict[str, List[Any]] = defaultdict(list)
-
-    for k in keys:
-        p_node = sharding.get_node(k, op="write")
-        write_buckets[p_node].append(k)
-        read_buckets[sharding.get_node(k, op="read")].append(k)
+    write_buckets, read_buckets = _build_io_buckets(keys, sharding)
 
     node_load: Dict[str, int] = {
         n: len(write_buckets.get(n, [])) + len(read_buckets.get(n, [])) for n in NODES
@@ -51,6 +95,12 @@ def benchmark_cluster(
             "avg_ms": 0.0,
             "p95_ms": 0.0,
             "p99_ms": 0.0,
+            "write_avg_ms": 0.0,
+            "write_p95_ms": 0.0,
+            "write_p99_ms": 0.0,
+            "read_avg_ms": 0.0,
+            "read_p95_ms": 0.0,
+            "read_p99_ms": 0.0,
             "node_load": node_load,
         }
 
@@ -58,39 +108,23 @@ def benchmark_cluster(
 
     def _io_write(item: Tuple[str, List[Any]]) -> Tuple[float, List[Tuple[float, int]]]:
         node, node_keys = item
-        cli = redis_client_for_node(node)
-        total_time = 0.0
-        samples: List[Tuple[float, int]] = []
-        for i in range(0, len(node_keys), pipeline_size):
-            chunk = node_keys[i : i + pipeline_size]
-            pipe = cli.pipeline()
-            for k in chunk:
-                pipe.set(str(k), payload, ex=ex_seconds)
-            t0 = time.perf_counter_ns()
-            pipe.execute()
-            dt = (time.perf_counter_ns() - t0) / 1e9
-            total_time += dt
-            ops = max(len(chunk), 1)
-            samples.append((dt / ops, ops))
-        return total_time, samples
+        return _run_node_batches(
+            node,
+            node_keys,
+            pipeline_size=pipeline_size,
+            payload=payload,
+            ex_seconds=ex_seconds,
+        )
 
     def _io_read(item: Tuple[str, List[Any]]) -> Tuple[float, List[Tuple[float, int]]]:
         node, node_keys = item
-        cli = redis_client_for_node(node)
-        total_time = 0.0
-        samples: List[Tuple[float, int]] = []
-        for i in range(0, len(node_keys), pipeline_size):
-            chunk = node_keys[i : i + pipeline_size]
-            pipe = cli.pipeline()
-            for k in chunk:
-                pipe.get(str(k))
-            t0 = time.perf_counter_ns()
-            _ = pipe.execute()
-            dt = (time.perf_counter_ns() - t0) / 1e9
-            total_time += dt
-            ops = max(len(chunk), 1)
-            samples.append((dt / ops, ops))
-        return total_time, samples
+        return _run_node_batches(
+            node,
+            node_keys,
+            pipeline_size=pipeline_size,
+            payload=None,
+            ex_seconds=ex_seconds,
+        )
 
     write_node_totals, write_all_samples = [], []
     read_node_totals, read_all_samples = [], []
@@ -113,15 +147,19 @@ def benchmark_cluster(
     )
     throughput = (total_ops / cluster_wall) if cluster_wall > 0 else 0.0
 
-    def _wavg(samples: List[Tuple[float, int]]) -> float:
-        wsum = sum(w for _, w in samples)
-        return sum(v * w for v, w in samples) / wsum if wsum > 0 else 0.0
-
     combined_samples = write_all_samples + read_all_samples
+    write_avg_ms = _wavg(write_all_samples) * 1000.0
+    read_avg_ms = _wavg(read_all_samples) * 1000.0
     return {
         "throughput_ops_s": float(throughput),
         "avg_ms": float(_wavg(combined_samples) * 1000.0),
         "p95_ms": float(weighted_percentile(combined_samples, 0.95) * 1000.0),
         "p99_ms": float(weighted_percentile(combined_samples, 0.99) * 1000.0),
+        "write_avg_ms": float(write_avg_ms),
+        "write_p95_ms": float(weighted_percentile(write_all_samples, 0.95) * 1000.0),
+        "write_p99_ms": float(weighted_percentile(write_all_samples, 0.99) * 1000.0),
+        "read_avg_ms": float(read_avg_ms),
+        "read_p95_ms": float(weighted_percentile(read_all_samples, 0.95) * 1000.0),
+        "read_p99_ms": float(weighted_percentile(read_all_samples, 0.99) * 1000.0),
         "node_load": {n: int(node_load.get(n, 0)) for n in NODES},
     }

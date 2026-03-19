@@ -74,9 +74,9 @@ It is not selected from measured node load or runtime latency.
 In practice, the router:
 
 1. finds the key position on the ring
-2. walks forward on the ring
-3. collects distinct non-primary nodes
-4. picks one using a stride derived from the key hash
+2. computes a key-specific stride from the auxiliary hash `H(k || "|alt")`
+3. walks forward on the ring by that stride
+4. picks the first non-primary successor, with a linear fallback if needed
 
 This makes alternate selection stable for the same key and ring membership.
 

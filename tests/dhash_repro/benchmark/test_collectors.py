@@ -79,5 +79,11 @@ def test_benchmark_cluster_returns_expected_result_keys() -> None:
         "avg_ms",
         "p95_ms",
         "p99_ms",
+        "write_avg_ms",
+        "write_p95_ms",
+        "write_p99_ms",
+        "read_avg_ms",
+        "read_p95_ms",
+        "read_p99_ms",
         "node_load",
     }

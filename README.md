@@ -40,6 +40,20 @@ Stop and remove containers:
 docker compose down -v
 ```
 
+Run a specific stage inside the already-started runner container:
+```bash
+docker compose exec runner sh -lc "DHASH_MODE=zipf DHASH_DATASET_FILTER=nasa DHASH_REPEATS=10 python -m dhash_repro"
+```
+
+Supported stages in the current codebase are:
+
+- `pipeline`
+- `microbench`
+- `zipf`
+- `ablation`
+- `redistrib`
+- `all`
+
 ## Repository Structure
 ```text
 src/

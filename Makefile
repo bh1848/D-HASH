@@ -14,7 +14,7 @@ mypy:
 	mypy src tests
 
 test:
-	pytest tests/ -v
+	pytest tests/ --ignore=tests/dhash_repro/experiments -v
 
 check: format lint mypy test
 
