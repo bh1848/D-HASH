@@ -26,6 +26,8 @@ Load Stddev reduction on NASA HTTP web log (Zipf α = 1.1–1.5, 5 Redis nodes):
 | Rendezvous (HRW) | 311,019 | 466,891 | 623,144 |
 | **D-HASH** | **228,827** | **387,997** | **531,824** |
 
+> This repository refactors the paper implementation into the current project structure while preserving the core experimental semantics. Measured metrics may differ from the results reported in the paper depending on the execution environment.
+
 D-HASH reduces Load Stddev by 21.8–26.7% compared to Consistent Hashing on the NASA dataset. On the eBay dataset, where baseline load variability is low, D-HASH maintains comparable performance without degradation.
 
 ## Quick Start
