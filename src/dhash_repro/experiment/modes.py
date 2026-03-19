@@ -75,7 +75,7 @@ def run_single_mode(
     elif mode_name == "Rendezvous":
         sh = RendezvousHashing(NODES)
     elif mode_name == "D-HASH":
-        params = dhash_params or {"T": 50, "W": 1024}
+        params = dhash_params or {"T": 300, "W": 200}
         sh = DHash(NODES, hot_key_threshold=int(params["T"]), window_size=int(params["W"]))
     else:
         raise ValueError(f"Unknown mode: {mode_name}")

@@ -66,7 +66,7 @@ services:
       PYTHONPATH: "/workspace/src"
       DHASH_MODE: "all"
       DHASH_ALPHA: "1.5"
-      DHASH_REPEATS: "1"
+      DHASH_REPEATS: "10"
     volumes:
       - .:/workspace
     networks: [redis-cluster]

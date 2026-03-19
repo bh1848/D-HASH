@@ -35,7 +35,3 @@ These files define the main terms and runtime variables used in the repository.
 ---
 
 ## Troubleshooting
-
-- [임계점 직후에도 기본 노드를 유지하는 이유 (블로그)](https://velog.io/@bh1848/임계점-직후에도-기본-노드를-유지하는-이유)
-
-- [멤버십 변경 시 대체 노드 캐시를 비우는 이유 (블로그)](https://velog.io/@bh1848/멤버십-변경-시-대체-노드-캐시를-비우는-이유)

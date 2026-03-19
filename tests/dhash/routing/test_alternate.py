@@ -43,3 +43,21 @@ def test_ensure_alternate_keeps_cached_value() -> None:
     )
 
     assert alt_dict["test_key"] == "n2"
+
+
+def test_ensure_alternate_with_varying_stride() -> None:
+    nodes = ["n1", "n2", "n3"]
+    ring_map = {10: "n1", 20: "n2", 30: "n3", 40: "n1", 50: "n2", 60: "n3"}
+    ring_keys = sorted(ring_map)
+    primary = "n1"
+
+    def hash_stride_2(key: Any) -> int:
+        if "|alt" in str(key):
+            return 1
+        return 0
+
+    alt_dict: dict[Any, str] = {}
+    ensure_alternate("test_key", alt_dict, nodes, ring_keys, ring_map, hash_stride_2, primary)
+
+    assert alt_dict["test_key"] != primary
+    assert alt_dict["test_key"] in {"n2", "n3"}

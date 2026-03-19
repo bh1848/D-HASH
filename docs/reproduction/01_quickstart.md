@@ -62,7 +62,7 @@ The repository root `docker-compose.yml` currently sets:
 
 - `DHASH_MODE=all`
 - `DHASH_ALPHA=1.5`
-- `DHASH_REPEATS=1`
+- `DHASH_REPEATS=10`
 
 The code defaults are broader than the compose sample. For example, if `DHASH_REPEATS` is not set, the runner uses `10`.
 
