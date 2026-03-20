@@ -31,7 +31,3 @@ These files describe how to run the project and how to read the benchmark output
 - [Config Schema](reference/config_schema.md)
 
 These files define the main terms and runtime variables used in the repository.
-
----
-
-## Troubleshooting
