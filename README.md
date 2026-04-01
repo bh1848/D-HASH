@@ -84,7 +84,7 @@ src/
 
 ## Troubleshooting
 
-- [alternate preload 누락을 추가해서 nil rate 45.3% 해결하기](https://velog.io/@bh1848/D-HASH-alternate-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EA%B3%B5%EB%B0%B1-%EB%AC%B8%EC%A0%9C%EC%99%80-preload-%ED%99%95%EC%9E%A5)
+- [alternate에도 preload 적용해서 nil rate 45.3% 해결하기](https://velog.io/@bh1848/D-HASH-alternate-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EA%B3%B5%EB%B0%B1-%EB%AC%B8%EC%A0%9C%EC%99%80-preload-%ED%99%95%EC%9E%A5)
 - [guard phase와 epoch 전환으로 cold start 방지하기](https://velog.io/@bh1848/D-HASH-%ED%8A%B8%EB%9F%AC%EB%B8%94%EC%8A%88%ED%8C%85-guard-phase%EC%99%80-epoch-offset-%EC%84%A4%EA%B3%84)
 - [stride 탐색으로 alternate 노드 중복 제거하기](https://velog.io/@bh1848/D-HASH-alternate-%EB%85%B8%EB%93%9C%EC%99%80-Consistent-Hashing-%EB%AC%BC%EB%A6%AC-%EB%85%B8%EB%93%9C-%EB%B6%84%EC%82%B0)
 - [노드 구성 변경 시 stale alternate를 alt.clear()로 무효화하기](https://velog.io/@bh1848/%EB%85%B8%EB%93%9C-%EB%B3%80%EA%B2%BD-%ED%9B%84-stale-alternate%EB%A1%9C-read-%EA%B2%BD%EB%A1%9C%EA%B0%80-%EC%98%A4%EC%97%BC%EB%90%98%EB%8A%94-%EB%AC%B8%EC%A0%9C)
