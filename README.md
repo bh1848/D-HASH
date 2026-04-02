@@ -84,10 +84,10 @@ src/
 
 ## Troubleshooting
 
-- [alternate에도 preload 적용해서 nil rate 45.3% 해결하기](https://velog.io/@bh1848/D-HASH-alternate-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EA%B3%B5%EB%B0%B1-%EB%AC%B8%EC%A0%9C%EC%99%80-preload-%ED%99%95%EC%9E%A5)
-- [guard phase와 epoch 전환으로 cold start 방지하기](https://velog.io/@bh1848/D-HASH-%ED%8A%B8%EB%9F%AC%EB%B8%94%EC%8A%88%ED%8C%85-guard-phase%EC%99%80-epoch-offset-%EC%84%A4%EA%B3%84)
-- [stride 탐색으로 alternate 노드 중복 제거하기](https://velog.io/@bh1848/D-HASH-alternate-%EB%85%B8%EB%93%9C%EC%99%80-Consistent-Hashing-%EB%AC%BC%EB%A6%AC-%EB%85%B8%EB%93%9C-%EB%B6%84%EC%82%B0)
-- [노드 구성 변경 시 stale alternate를 alt.clear()로 무효화하기](https://velog.io/@bh1848/%EB%85%B8%EB%93%9C-%EB%B3%80%EA%B2%BD-%ED%9B%84-stale-alternate%EB%A1%9C-read-%EA%B2%BD%EB%A1%9C%EA%B0%80-%EC%98%A4%EC%97%BC%EB%90%98%EB%8A%94-%EB%AC%B8%EC%A0%9C)
+- [대체 노드에도 preload 적용해서 nil 발생 해결하기](https://velog.io/@bh1848/%EB%8C%80%EC%B2%B4-%EB%85%B8%EB%93%9C%EC%97%90%EB%8F%84-preload-%EC%A0%81%EC%9A%A9%ED%95%B4%EC%84%9C-nil-%EB%B0%9C%EC%83%9D-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
+- [cold start와 파이프라인 경계 문제 해결하기](https://velog.io/@bh1848/cold-start%EC%99%80-%ED%8C%8C%EC%9D%B4%ED%94%84%EB%9D%BC%EC%9D%B8-%EA%B2%BD%EA%B3%84-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
+- [주 노드와 대체 노드가 같은 물리 노드를 가리키는 문제 해결하기](https://velog.io/@bh1848/%EC%A3%BC-%EB%85%B8%EB%93%9C%EC%99%80-%EB%8C%80%EC%B2%B4-%EB%85%B8%EB%93%9C%EA%B0%80-%EA%B0%99%EC%9D%80-%EB%AC%BC%EB%A6%AC-%EB%85%B8%EB%93%9C%EB%A5%BC-%EA%B0%80%EB%A6%AC%ED%82%A4%EB%8A%94-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
+- [노드 구성 변경 이후 stale 대체 노드가 남는 문제 해결하기](https://velog.io/@bh1848/%EB%85%B8%EB%93%9C-%EA%B5%AC%EC%84%B1-%EB%B3%80%EA%B2%BD-%EC%9D%B4%ED%9B%84-stale-%EB%8C%80%EC%B2%B4-%EB%85%B8%EB%93%9C%EA%B0%80-%EB%82%A8%EB%8A%94-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
 
 ## License
 
