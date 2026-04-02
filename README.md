@@ -84,7 +84,7 @@ src/
 
 ## Troubleshooting
 
-- [대체 노드에도 preload 적용해서 nil 발생 해결하기](https://velog.io/@bh1848/%EB%8C%80%EC%B2%B4-%EB%85%B8%EB%93%9C%EC%97%90%EB%8F%84-preload-%EC%A0%81%EC%9A%A9%ED%95%B4%EC%84%9C-nil-%EB%B0%9C%EC%83%9D-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
+- [대체 노드에도 데이터 적재해서 nil 해결하기](https://velog.io/@bh1848/%EB%8C%80%EC%B2%B4-%EB%85%B8%EB%93%9C%EC%97%90%EB%8F%84-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EC%A0%81%EC%9E%AC%ED%95%B4%EC%84%9C-nil-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
 - [cold start와 파이프라인 경계 문제 해결하기](https://velog.io/@bh1848/cold-start%EC%99%80-%ED%8C%8C%EC%9D%B4%ED%94%84%EB%9D%BC%EC%9D%B8-%EA%B2%BD%EA%B3%84-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
 - [대체 노드 중복 선택 문제 해결하기](https://velog.io/@bh1848/%EB%8C%80%EC%B2%B4-%EB%85%B8%EB%93%9C-%EC%A4%91%EB%B3%B5-%EC%84%A0%ED%83%9D-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
 - [노드 구성 변경 이후 stale 대체 노드가 남는 문제 해결하기](https://velog.io/@bh1848/%EB%85%B8%EB%93%9C-%EA%B5%AC%EC%84%B1-%EB%B3%80%EA%B2%BD-%EC%9D%B4%ED%9B%84-stale-%EB%8C%80%EC%B2%B4-%EB%85%B8%EB%93%9C%EA%B0%80-%EB%82%A8%EB%8A%94-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%ED%95%98%EA%B8%B0)
