@@ -79,7 +79,7 @@ src/
 
 - [Project Documentation](docs/README.md)
 - [Architecture](docs/architecture.md)
-  - [Algorithm](docs/algorithm.md)
+- [Algorithm](docs/algorithm.md)
 - [Experiments](docs/experiments.md)
 
 ## Troubleshooting
